@@ -12,10 +12,12 @@ from spiritualchat.vectorstores import pinecone
 from collections import defaultdict
 
 chat_history = defaultdict(lambda: defaultdict(list))
+last_chat_id = 0
 def get_chat_history(user_id: str, chat_id: str):
 	global chat_history
 	if not chat_id:
-		chat_id = 0
+		chat_id = last_chat_id += 1
+		last_chat_id = chat_id
 	return chat_history[user_id][chat_id], chat_id
 
 def append_chat_history(user_id: str, chat_id: str, messages: list):
