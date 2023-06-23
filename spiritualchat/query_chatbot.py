@@ -14,71 +14,71 @@ from collections import defaultdict
 chat_history = defaultdict(lambda: defaultdict(list))
 last_chat_id = 0
 def get_chat_history(user_id: str, chat_id: str):
-	global chat_history
-	if not chat_id:
-		chat_id = last_chat_id += 1
-		last_chat_id = chat_id
-	return chat_history[user_id][chat_id], chat_id
+    global chat_history
+    if not chat_id:
+        chat_id = last_chat_id + 1
+        last_chat_id = chat_id
+    return chat_history[user_id][chat_id], chat_id
 
 def append_chat_history(user_id: str, chat_id: str, messages: list):
-	global chat_history
-	chat_history[user_id][chat_id].extend(messages)
+    global chat_history
+    chat_history[user_id][chat_id].extend(messages)
 
 chain = None
 def query_chatbot(user_input: str):
-	"""
-	Returns:
-		{
-	    "ai_response": "",
+    """
+    Returns:
+        {
+        "ai_response": "",
 
-	    "db_results": {
-	        "hypotheses": [
-	            {
-	                "url": str,
-	                "name": str,
-	                "snippets": [str]
-	            }
-	        ],
-	        "experiences": [
-	            {
-	                "url": str,
-	                "name": str,
-	                "snippets": [str]
-	            }
-	        ],
-	        "research": [
-	            {
-	                "url": str,
-	                "name": str,
-	                "snippets": [str]
-	            }
-	        ]
-	    }
-	}
-	"""
-	global chain
-	# if chain is None:
-	# 	chain = create_chat_chain()
-	# chain.run(input_documents=docs, question=query)
-	return {'ai': "Hello world. I'm a Spiritual Data chatbot.", 'db_results': {'experiences': [{'url': 'https://spiritualdata.org', 'snippet': 'This happened.', 'name': 'My experience'}]}}
+        "db_results": {
+            "hypotheses": [
+                {
+                    "url": str,
+                    "name": str,
+                    "snippets": [str]
+                }
+            ],
+            "experiences": [
+                {
+                    "url": str,
+                    "name": str,
+                    "snippets": [str]
+                }
+            ],
+            "research": [
+                {
+                    "url": str,
+                    "name": str,
+                    "snippets": [str]
+                }
+            ]
+        }
+    }
+    """
+    global chain
+    # if chain is None:
+    #     chain = create_chat_chain()
+    # chain.run(input_documents=docs, question=query)
+    return {'ai': "Hello world. I'm a Spiritual Data chatbot.", 'db_results': {'experiences': [{'url': 'https://spiritualdata.org', 'snippet': 'This happened.', 'name': 'My experience'}]}}
 
 def create_chat_chain():
-	llm = OpenAI(temperature=0, openai_api_key=os.environ['OPENAI_API_KEY'])
-	chain = load_qa_chain(llm, chain_type="stuff")
+    llm = OpenAI(temperature=0, openai_api_key=os.environ['OPENAI_API_KEY'])
+    chain = load_qa_chain(llm, chain_type="stuff")
 
-	extract_query_texts(user_input)
+    extract_query_texts(user_input)
 
-	docs = docsearch.similarity_search(query, include_metadata=True)
-	docsearch = Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
-	prompt = """Given this input from the user, provide the following JSON format without anything else in your response:
-	{"hypotheses_queries": ["<Text to embed>"],
-	"research_queries": ["<Text to embed>"],
-	"experiences_queries": ["<Text to embed>"]}
-	There may be more than one query per type. Ensure the text to embed is a string that represents what the user is asking in relation to the particular type of documents the query is for.
-	"""
+    docs = docsearch.similarity_search(query, include_metadata=True)
+    docsearch = Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
+    prompt = """Given this input from the user, provide the following JSON format without anything else in your response:
+    {"hypotheses_queries": ["<Text to embed>"],
+    "research_queries": ["<Text to embed>"],
+    "experiences_queries": ["<Text to embed>"]}
+    There may be more than one query per type. Ensure the text to embed is a string that represents what the user is asking in relation to the particular type of documents the query is for.
+    """
 
 def extract_query_texts(text, information_types=['experiences', 'research', 'hypotheses']):
-	"""
-	Get texts to embed, by information_types.
-	"""
-	return
+    """
+    Get texts to embed, by information_types.
+    """
+    return

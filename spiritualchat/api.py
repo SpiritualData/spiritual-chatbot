@@ -82,7 +82,7 @@ def chat(request: ChatRequest):
 
     chat_history.append({'type': 'human', 'message': message})
     response = query_chatbot(chat_history)
-[[]]
+
     chat_history.append({'type': 'ai', 'message': response['ai']})
     append_chat_history(user_id, chat_id, chat_history)
 
