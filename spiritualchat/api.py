@@ -43,10 +43,25 @@ Response:
     { chat_id:"", title: "" }
 """
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from spiritualchat import query_chatbot, get_chat_history, append_chat_history
 
 app = FastAPI()
+
+# CORS configuration
+origins = [
+    "http://localhost:3000",
+    "http://18.189.128.76:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class ChatRequest(BaseModel):
     chat_id: str
@@ -62,12 +77,12 @@ class ChatResponse(BaseModel):
 def chat(request: ChatRequest):
     chat_id = request.chat_id
     user_id = 0
-    chat_history = get_chat_history(user_id, chat_id)
+    chat_history, chat_id = get_chat_history(user_id, chat_id)
     message = request.message
 
     chat_history.append({'type': 'human', 'message': message})
     response = query_chatbot(chat_history)
-
+[[]]
     chat_history.append({'type': 'ai', 'message': response['ai']})
     append_chat_history(user_id, chat_id, chat_history)
 

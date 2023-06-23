@@ -16,7 +16,7 @@ def get_chat_history(user_id: str, chat_id: str):
 	global chat_history
 	if not chat_id:
 		chat_id = 0
-	return chat_history[user_id][chat_id]
+	return chat_history[user_id][chat_id], chat_id
 
 def append_chat_history(user_id: str, chat_id: str, messages: list):
 	global chat_history
