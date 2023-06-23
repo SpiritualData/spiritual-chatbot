@@ -51,7 +51,7 @@ if extras_require:
 # are installed.
 # https://packaging.python.org/guides/single-sourcing-package-version/
 meta = {}
-exec(read("spiritual_chatbot/__meta__.py"), meta)
+exec(read("spiritualchat/__meta__.py"), meta)
 
 
 # Import the README and use it as the long-description.

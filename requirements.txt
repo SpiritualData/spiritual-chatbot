@@ -1,2 +1,5 @@
 langchain
 pinecone-client
+uvicorn
+fastapi
+pinecone-client
