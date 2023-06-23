@@ -1,46 +1,75 @@
 """
-Uses query_chatbot to send chatbot response back to user.
+Uses query_chatbot to send chatbot response back to user. When the chatbot is done
 
+/chat/response
 Request:
 {
-    "conversation_id": "123456",
-    "chat_history": [
-        {
-            "user": "Tell me more about near death experiences.",
-            "ai": "Near-death experiences are profound psychological events..."
-        }
-    ],
-    "user_input": "What experiences talk about users?"
+    "chat_id": "123456",
+    "message": "What experiences talk about users?"
 }
 Response:
 {
-    "ai_response": "Spiritual science attempts to investigate spiritual experiences, including phenomena like metaphysics and near-death experiences, through rigorous and scholarly methodologies. While it may not provide definitive answers, it offers valuable insights and frameworks for understanding these complex phenomena.",
+    "ai": "...",
 
     "db_results": {
         "hypotheses": [
             {
                 "url": "https://www.example.com/hypothesis1",
-                "name": "Exploring Metaphysical Realities: Hypotheses in Contemporary Philosophy",
-                "snippet": "Our hypothesis posits that metaphysics, when interpreted through the lens of spiritual science, can be understood as a pursuit of the ultimate nature of spiritual and physical reality."
+                "name": "...",
+                "snippet": "..."
             }
         ],
         "experiences": [
             {
                 "url": "https://www.example.com/experience1",
-                "name": "Tales of the Beyond: An Anthology of Near-Death Experiences",
-                "snippet": "In our collection of near-death experiences, many narrators reported a profound sense of interconnectedness and spiritual awakening, suggesting possible ties with metaphysical principles."
+                "name": "...",
+                "snippet": "..."
             }
         ],
         "research": [
             {
                 "url": "https://www.example.com/research1",
-                "name": "Spiritual Science: An Empirical Analysis of Metaphysical and Near-Death Phenomena",
-                "snippet": "Our research aimed to apply the tools of spiritual science to better understand metaphysics and near-death experiences. While conclusions remain tentative, our findings underscore the potential value of spiritual perspectives in these areas."
+                "name": "...",
+                "snippet": "..."
             }
         ]
     }
 }
+
+/chat/title
+Request:
+    { message: "" }
+Response:
+    { chat_id:"", title: "" }
 """
+from fastapi import FastAPI
+from pydantic import BaseModel
+from spiritualchat import query_chatbot, get_chat_history, append_chat_history
 
-from spiritualchat import query_chatbot
+app = FastAPI()
 
+class ChatRequest(BaseModel):
+    chat_id: str
+    message: str
+
+class ChatResponse(BaseModel):
+    ai: str
+    db_results: dict
+    title: str
+    chat_id: str
+
+@app.post('/chat/response', response_model=ChatResponse)
+def chat(request: ChatRequest):
+    chat_id = request.chat_id
+    user_id = 0
+    chat_history = get_chat_history(user_id, chat_id)
+    message = request.message
+
+    chat_history.append({'type': 'human', 'message': message})
+    response = query_chatbot(chat_history)
+
+    chat_history.append({'type': 'ai', 'message': response['ai']})
+    append_chat_history(user_id, chat_id, chat_history)
+
+    api_response = ChatResponse(ai=response['ai'], db_results=response['db_results'], title="Spiritual Chat", chat_id=chat_id)
+    return api_response

@@ -24,3 +24,4 @@ def split_document(text, max_chars=1000):
 	"""
 	# TODO
 	return segments
+

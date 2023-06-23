@@ -1,8 +1,11 @@
+import pinecone
+import os
+
 # initialize pinecone
 pinecone.init(
-    api_key=PINECONE_API_KEY,  # find at app.pinecone.io
-    environment=PINECONE_API_ENV  
+    api_key=os.environ.get('PINECONE_API_KEY'),  # find at app.pinecone.io
+    environment=os.environ.get('PINECONE_API_ENV')
 )
-index_name = "mlqai"
+index_name = "experiences-index"
 
-docsearch = Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
+# docsearch = pinecone.Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)

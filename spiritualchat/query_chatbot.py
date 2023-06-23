@@ -9,6 +9,18 @@ Implementation details:
 from langchain.llms import OpenAI
 from langchain.chains.question_answering import load_qa_chain
 from spiritualchat.vectorstores import pinecone
+from collections import defaultdict
+
+chat_history = defaultdict(lambda: defaultdict(list))
+def get_chat_history(user_id: str, chat_id: str):
+	global chat_history
+	if not chat_id:
+		chat_id = 0
+	return chat_history[user_id][chat_id]
+
+def append_chat_history(user_id: str, chat_id: str, messages: list):
+	global chat_history
+	chat_history[user_id][chat_id].extend(messages)
 
 chain = None
 def query_chatbot(user_input: str):
@@ -43,9 +55,10 @@ def query_chatbot(user_input: str):
 	}
 	"""
 	global chain
-	if chain is None:
-		chain = create_chat_chain()
-	chain.run(input_documents=docs, question=query)
+	# if chain is None:
+	# 	chain = create_chat_chain()
+	# chain.run(input_documents=docs, question=query)
+	return {'ai': "Hello world. I'm a Spiritual Data chatbot.", 'db_results': {'experiences': [{'url': 'https://spiritualdata.org', 'snippet': 'This happened.', 'name': 'My experience'}]}}
 
 def create_chat_chain():
 	llm = OpenAI(temperature=0, openai_api_key=os.environ['OPENAI_API_KEY'])
