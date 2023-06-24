@@ -3,3 +3,4 @@ pinecone-client
 uvicorn
 fastapi
 pinecone-client
+openai
