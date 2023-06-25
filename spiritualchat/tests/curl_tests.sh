@@ -1,0 +1,1 @@
+curl -X POST http://localhost:8000/chat/response -H "Content-Type: aplication/json" -d '{"message":"How are you?", "chat_id": ""}'
