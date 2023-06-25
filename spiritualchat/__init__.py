@@ -5,3 +5,5 @@ __version__ = __meta__.version
 from .query_chatbot import *
 from .prepare_embeddings import *
 from .vectorstores import *
+from .prompts import *
+from .pinecone_multisearch import *
