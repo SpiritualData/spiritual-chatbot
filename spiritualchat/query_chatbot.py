@@ -6,9 +6,13 @@ Implementation details:
 - Given the answers from the chatbot about the input, query for related data from our database and ask the chat bot to explain this data to the user in a particular way.
 
 """
-from langchain.llms import OpenAI
+from langchain.llms import OpenAIChat
 from langchain.chains.question_answering import load_qa_chain
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.chains import ConversationalRetrievalChain
 from spiritualchat.vectorstores import pinecone
+from spiritualchat.pinecone_multisearch import PineconeMultiSearchRetriever
+from spiritualchat.prompts import CONDENSE_QUESTION_PROMPT, QA_PROMPT, SYSTEM_PROMPT
 from collections import defaultdict
 
 chat_history = defaultdict(lambda: defaultdict(list))
@@ -26,7 +30,7 @@ def append_chat_history(user_id: str, chat_id: str, messages: list):
     chat_history[user_id][chat_id].extend(messages)
 
 chain = None
-def query_chatbot(user_input: str):
+def query_chatbot(user_input: str, datasets=['experiences', 'research', 'hypotheses'], memory_k=2, parsing_model='gpt3.5-turbo', answer_model='gpt3.5-turbo', **kwargs):
     """
     Returns:
         {
@@ -56,30 +60,22 @@ def query_chatbot(user_input: str):
             ]
         }
     }
+
+    Implementation details:
+        1. Use LangChain's ConversationalRetrievalChain with a custom condense_question_prompt to get embedding texts per document type (or Pinecone index namespace).
+        2. Implement a custom BaseRetriever that makes multiple Pinecone queries given a list of queries by namespace from user input (using condense_question_prompt)
     """
     global chain
-    # if chain is None:
-    #     chain = create_chat_chain()
-    # chain.run(input_documents=docs, question=query)
+    if chain is None:
+        chain = ConversationalRetrievalChain.from_llm(
+            llm=OpenAIChat(temperature=0,model_name=parsing_model),
+            retriever=PineconeMultiSearchRetriever(),
+            condense_question_prompt=CONDENSE_QUESTION_PROMPT,
+            condense_question_llm=OpenAIChat(temperature=0,model_name=answer_model),
+            # We only keep the last k interactions in memory
+            memory=ConversationBufferWindowMemory(k=memory_k),
+            combine_docs_chain_kwargs=kwargs,
+            verbose=True
+        )
+    chain.run(question=user_input)
     return {'ai': "Hello world. I'm a Spiritual Data chatbot.", 'db_results': {'experiences': [{'url': 'https://spiritualdata.org', 'snippet': 'This happened.', 'name': 'My experience'}]}}
-
-def create_chat_chain():
-    llm = OpenAI(temperature=0, openai_api_key=os.environ['OPENAI_API_KEY'])
-    chain = load_qa_chain(llm, chain_type="stuff")
-
-    extract_query_texts(user_input)
-
-    docs = docsearch.similarity_search(query, include_metadata=True)
-    docsearch = Pinecone.from_texts([t.page_content for t in texts], embeddings, index_name=index_name)
-    prompt = """Given this input from the user, provide the following JSON format without anything else in your response:
-    {"hypotheses_queries": ["<Text to embed>"],
-    "research_queries": ["<Text to embed>"],
-    "experiences_queries": ["<Text to embed>"]}
-    There may be more than one query per type. Ensure the text to embed is a string that represents what the user is asking in relation to the particular type of documents the query is for.
-    """
-
-def extract_query_texts(text, information_types=['experiences', 'research', 'hypotheses']):
-    """
-    Get texts to embed, by information_types.
-    """
-    return
