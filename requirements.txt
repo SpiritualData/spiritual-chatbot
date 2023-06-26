@@ -4,3 +4,9 @@ uvicorn
 fastapi
 pinecone-client
 openai
+tiktoken
+fire
+pymongo
+tqdm
+python-jose[cryptography]
+httpx
