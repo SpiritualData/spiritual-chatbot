@@ -42,12 +42,20 @@ Request:
 Response:
     { chat_id:"", title: "" }
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from spiritualchat import query_chatbot, get_chat_history, append_chat_history
+from spiritualchat import query_chatbot, get_chat_history
+from jose import jwt, JWTError
+from jose.utils import base64url_decode
+import httpx
+import json
+from typing import Dict, Any
 
 app = FastAPI()
+
+security = HTTPBearer()
 
 # CORS configuration
 origins = [
@@ -73,18 +81,66 @@ class ChatResponse(BaseModel):
     title: str
     chat_id: str
 
-@app.post('/chat/response', response_model=ChatResponse)
-def chat(request: ChatRequest):
-    chat_id = request.chat_id
+# Fetch the JWT Key Set (JWKS) from the Clerk API
+async def get_jwks() -> Dict[str, Any]:
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.get('https://api.clerk.dev/v1/jwks')
+            res.raise_for_status()  # This will raise an HTTPError if the response had an HTTP error status.
+            return res.json()
+    except httpx.HTTPStatusError:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired token")
+
+# JWT Verification and decoding
+async def decode_jwt(token: str, jwks: dict):
+    header = jwt.get_unverified_header(token)
+    rsa_key = {}
+    for key in jwks["keys"]:
+        if key["kid"] == header["kid"]:
+            rsa_key = {
+                "kty": key["kty"],
+                "kid": key["kid"],
+                "use": key["use"],
+                "n": key["n"],
+                "e": key["e"]
+            }
+    if rsa_key:
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=["RS256"],
+                options={"verify_exp": True}
+            )
+            return payload
+        except JWTError:
+            raise HTTPException(
+                status_code=403,
+                detail="Access forbidden",
+            )
+    raise HTTPException(
+        status_code=403,
+        detail="Access forbidden",
+    )
+
+# FastAPI endpoint
+@app.post("/chat/response", dependencies=[Depends(security)])
+async def chat(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # jwks = await get_jwks()
+    # auth_token = credentials.credentials
+    # payload = await decode_jwt(auth_token, jwks)
+    # if auth_token:
+    #     auth_token = auth_token.replace("Bearer ", "")
+    #     payload = await decode_jwt(auth_token, jwks)
+    #     user_id = payload['sub']  # Get the user id from JWT payload
+    # else:
+    #     user_id = 0  # Or handle it differently, for example by raising an error
     user_id = 0
+
+    chat_id = request.chat_id
     chat_history, chat_id = get_chat_history(user_id, chat_id)
     message = request.message
-
-    chat_history.append({'type': 'human', 'message': message})
-    response = query_chatbot(chat_history)
-
-    chat_history.append({'type': 'ai', 'message': response['ai']})
-    append_chat_history(user_id, chat_id, chat_history)
+    response = query_chatbot(message, chat_history)
 
     api_response = ChatResponse(ai=response['ai'], db_results=response['db_results'], title="Spiritual Chat", chat_id=chat_id)
     return api_response

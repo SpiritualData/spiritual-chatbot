@@ -8,6 +8,7 @@ pinecone.init(
 )
 
 index_name = os.environ.get('PINECONE_INDEX_NAME', 'prototype')
+vector_index = pinecone.Index(index_name)
 namespaces = ['experiences', 'research', 'hypotheses']
 
 def load_existing_embeddings(index_name, data_type):
