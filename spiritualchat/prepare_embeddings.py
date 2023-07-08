@@ -10,6 +10,8 @@ import csv
 from loguru import logger
 from tqdm import tqdm
 import time
+import pickle
+import bson
 
 vector_texts = []
 
@@ -81,6 +83,7 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
                     mongo_doc = dict(mongo_data)
                     mongo_doc['text'] = text
                     mongo_doc['pinecone_id'] = pinecone_id
+                    mongo_doc['embedding'] = bson.binary.Binary(pickle.dumps(vectors[chunk_index], protocol=pickle.HIGHEST_PROTOCOL))
                     mongo_docs.append(mongo_doc)
                 # Add embeddings to Pinecone with metadata and namespace
                 vector_index.upsert(
