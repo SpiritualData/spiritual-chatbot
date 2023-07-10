@@ -133,6 +133,59 @@ def embed_csv(df):
         all_embeddings.extend(embeddings)
     return embeddings
 
+def remove_duplicates(key='pinecone_id', collections=['experiences']):
+    """
+    Remove duplicate entries from Mongo by a given field (key).
+    """
+    mongo = mongo_connect_db(database_name='spiritualdata')
+    duplicates_removed = 0
+
+    for collection in collections:
+        # Get all pinecone_id
+        ids = mongo_query_db(
+            query_type="find",
+            mongo_object=mongo,
+            query={},
+            projection={key: 1, '_id': 1},  # Only load pinecone_id
+            database='spiritualdata',
+            collection=collection
+        )
+        ids = [doc[key] for doc in ids]
+
+        # Count occurrences
+        from collections import Counter
+        id_counts = Counter(ids)
+
+        # Find duplicates
+        duplicates = [id for id, count in id_counts.items() if count > 1]
+
+        # Remove duplicates
+        for duplicate in duplicates:
+            # Get all documents with this id
+            docs = mongo_query_db(
+                query_type="find",
+                mongo_object=mongo,
+                query={key: duplicate},
+                projection={key: 1, '_id': 1},
+                database='spiritualdata',
+                collection=collection
+            )
+            # Sort by _id (this is a timestamp in MongoDB)
+            docs.sort(key=lambda doc: doc['_id'])
+            # Delete all but the first (oldest) document
+            for doc in docs[1:]:
+                mongo_query_db(
+                    query_type="delete_one",
+                    mongo_object=mongo,
+                    query={'_id': doc['_id']},
+                    database='spiritualdata',
+                    collection=collection
+                )
+            duplicates_removed += len(docs) - 1
+
+    print(f'Duplicates removed: {duplicates_removed}')
+    return duplicates_removed
+
 if __name__ == "__main__":
     Fire(prepare_embeddings)
 

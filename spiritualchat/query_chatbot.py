@@ -10,8 +10,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationBufferWindowMemory
 from spiritualchat.vectorstores import vector_index
-from spiritualchat.pinecone_multisearch import PineconeMultiSearchRetriever, MultiSearchConversationalRetrievalChain
-from spiritualchat.prompts import CONDENSE_QUESTION_PROMPT, QA_PROMPT, SYSTEM_PROMPT
+from spiritualchat.pinecone_namespacesearch import PineconeNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
+from spiritualchat.prompts import create_condense_prompt, QA_PROMPT
 from langchain.memory.chat_message_histories.in_memory import ChatMessageHistory
 from langchain.embeddings.openai import OpenAIEmbeddings
 from loguru import logger
@@ -22,11 +22,14 @@ last_chat_id = 0
 def get_chat_history(user_id: str, chat_id: str):
     global chat_history
     global last_chat_id
+    found_history = None
     if not chat_id:
         chat_id = last_chat_id + 1
         last_chat_id = chat_id
-        chat_history[user_id][chat_id] = ChatMessageHistory()
-    return chat_history[user_id][chat_id], chat_id
+        found_history = ChatMessageHistory()
+        chat_history[user_id][chat_id] = found_history
+        logger.info('instantiated chat history: '+str(found_history))
+    return found_history.messages, chat_id
 
 # def append_chat_history(user_id: str, chat_id: str, message: str):
 #     global chat_history
@@ -35,7 +38,7 @@ def get_chat_history(user_id: str, chat_id: str):
 
 chain = None
 embeddings = OpenAIEmbeddings(chunk_size=1000)
-def query_chatbot(user_input: str, chat_history, datasets=['experiences', 'research', 'hypotheses'], memory_k=2, parsing_model='gpt3.5-turbo', answer_model='gpt3.5-turbo', **kwargs):
+def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'research', 'hypotheses'], title=None, memory_k=2, parsing_model='gpt-3.5-turbo', answer_model='gpt-3.5-turbo', max_tokens_limit=4000, return_results=True, **kwargs):
     """
     Returns:
         {
@@ -68,22 +71,49 @@ def query_chatbot(user_input: str, chat_history, datasets=['experiences', 'resea
 
     Implementation details:
         1. Use LangChain's ConversationalRetrievalChain with a custom condense_question_prompt to get embedding texts per document type (or Pinecone index namespace).
-        2. Implement a custom BaseRetriever that makes multiple Pinecone queries given a list of queries by namespace from user input (using condense_question_prompt)
+        2. Implement a custom BaseRetriever that makes Namespaceple Pinecone queries given a list of queries by namespace from user input (using condense_question_prompt)
     """
     global chain
     global embeddings
+    kwargs['prompt'] = QA_PROMPT
+    output_key = "answer"
     if chain is None:
-        chain = MultiSearchConversationalRetrievalChain.from_llm(
+        chain = NamespaceSearchConversationalRetrievalChain.from_llm(
             llm=ChatOpenAI(temperature=0,model_name=parsing_model),
-            retriever=PineconeMultiSearchRetriever(embeddings=embeddings, index=vector_index),
-            condense_question_prompt=CONDENSE_QUESTION_PROMPT,
+            retriever=PineconeNamespaceSearchRetriever(embeddings=embeddings, index=vector_index),
+            condense_question_prompt=create_condense_prompt(generate_title=title is None, namespaces=namespaces),
             condense_question_llm=ChatOpenAI(temperature=0,model_name=answer_model),
+            output_key=output_key,
             # We only keep the last k interactions in memory
-            memory=ConversationBufferWindowMemory(k=memory_k),
+            memory=ConversationBufferWindowMemory(k=memory_k,
+                memory_key="chat_history",
+                input_key="question", 
+                output_key=output_key, 
+                ai_prefix='Chatbot', 
+                human_prefix='User'),
+            max_tokens_limit=max_tokens_limit,
             combine_docs_chain_kwargs=kwargs,
-            verbose=True
+            verbose=False
         )
     result = chain(inputs=dict(question=user_input, chat_history=chat_history))
-    logger.info('result: '+dir(result)+result)
-    sources = result['sources']
-    return {'ai': result['answer'], 'db_results': {'experiences': [{'url': 'https://spiritualdata.org', 'snippet': 'This happened.', 'name': 'My experience'}]}}
+    response = {'ai': result['answer']}
+    if return_results:
+        db_results = {}
+        for namespace, sources in result['source_documents'].items():
+            formatted_sources = []
+            for source in sources:
+                split_id = source.metadata['id'].rsplit('_', 1)
+                url = split_id[0] if len(split_id) > 1 else source.metadata['id']
+                split_content = source.page_content.split('\n', 1)
+                name = split_content[0] if len(split_content) > 0 else 'Unnamed document'
+                snippet = split_content[1] if len(split_content) > 1 else 'Document content missing'
+                formatted_sources.append({
+                    'url': url,
+                    'snippet': snippet,
+                    'name': name
+                })
+            db_results[namespace] = formatted_sources
+        response['db_results'] = db_results
+    if 'title' in result:
+        response['title'] = result['title']
+    return response

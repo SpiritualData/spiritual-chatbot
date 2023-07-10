@@ -51,7 +51,12 @@ from jose import jwt, JWTError
 from jose.utils import base64url_decode
 import httpx
 import json
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
+from loguru import logger
+
+from spiritualdata_utils import init_logger
+
+init_logger()
 
 app = FastAPI()
 
@@ -74,12 +79,15 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     chat_id: str
     message: str
+    return_results: Optional[bool]
+    data_sources: Optional[List[str]]
+    answer_model: Optional[str]
 
 class ChatResponse(BaseModel):
     ai: str
-    db_results: dict
-    title: str
-    chat_id: str
+    db_results: Optional[dict]
+    title: Optional[str]
+    chat_id: Optional[str]
 
 # Fetch the JWT Key Set (JWKS) from the Clerk API
 async def get_jwks() -> Dict[str, Any]:
@@ -136,11 +144,19 @@ async def chat(request: ChatRequest, credentials: HTTPAuthorizationCredentials =
     # else:
     #     user_id = 0  # Or handle it differently, for example by raising an error
     user_id = 0
-
     chat_id = request.chat_id
+    logger.info(request.return_results)
     chat_history, chat_id = get_chat_history(user_id, chat_id)
     message = request.message
-    response = query_chatbot(message, chat_history)
+    kwargs = {}
+    if request.data_sources is not None:
+        kwargs['data_sources'] = request.data_sources
+    if request.return_results is not None:
+        kwargs['return_results'] = request.return_results
+    if request.answer_model is not None:
+        kwargs['answer_model'] = request.answer_model
+    response = query_chatbot(message, chat_history, **kwargs)
+    api_response = ChatResponse(**response)
+    api_response.chat_id = chat_id
 
-    api_response = ChatResponse(ai=response['ai'], db_results=response['db_results'], title="Spiritual Chat", chat_id=chat_id)
     return api_response
