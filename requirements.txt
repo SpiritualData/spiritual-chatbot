@@ -1,4 +1,4 @@
-langchain
+langchain=0.0.209
 pinecone-client
 uvicorn
 fastapi

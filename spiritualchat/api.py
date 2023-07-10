@@ -134,15 +134,15 @@ async def decode_jwt(token: str, jwks: dict):
 # FastAPI endpoint
 @app.post("/chat/response", dependencies=[Depends(security)])
 async def chat(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # jwks = await get_jwks()
-    # auth_token = credentials.credentials
-    # payload = await decode_jwt(auth_token, jwks)
-    # if auth_token:
-    #     auth_token = auth_token.replace("Bearer ", "")
-    #     payload = await decode_jwt(auth_token, jwks)
-    #     user_id = payload['sub']  # Get the user id from JWT payload
-    # else:
-    #     user_id = 0  # Or handle it differently, for example by raising an error
+    jwks = await get_jwks()
+    auth_token = credentials.credentials
+    payload = await decode_jwt(auth_token, jwks)
+    if auth_token:
+        auth_token = auth_token.replace("Bearer ", "")
+        payload = await decode_jwt(auth_token, jwks)
+        user_id = payload['sub']  # Get the user id from JWT payload
+    else:
+        user_id = 0  # Or handle it differently, for example by raising an error
     user_id = 0
     chat_id = request.chat_id
     logger.info(request.return_results)
