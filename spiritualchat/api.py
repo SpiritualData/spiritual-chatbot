@@ -65,10 +65,9 @@ app = FastAPI()
 security = HTTPBearer()
 
 # CORS configuration
-origins = [
-    "http://localhost:3000",
-    "http://18.189.128.76:3000",
-]
+origins_str = os.environ.get('ORIGINS')
+origins = origins_str.split(',')
+origins_set = set(origins)
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,7 +77,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-cache = TTLCache(maxsize=100, ttl=3600)  # Cache up to 100 items, data is valid for one hour
+cache = TTLCache(maxsize=1, ttl=3600)  # Cache up to 100 items, data is valid for one hour
 @cached(cache)
 async def get_jwks() -> Dict[str, Any]:
     try:
@@ -119,7 +118,7 @@ async def decode_jwt(credentials):
                 
                 # Checking 'azp' claim against the origins
                 if 'azp' in payload:
-                    if payload['azp'] not in origins:
+                    if payload['azp'] not in origins_set:
                         raise HTTPException(
                             status_code=401,
                             detail="Invalid token",
