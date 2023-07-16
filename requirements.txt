@@ -10,3 +10,4 @@ pymongo
 tqdm
 python-jose[cryptography]
 httpx
+cachetools

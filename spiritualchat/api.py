@@ -53,6 +53,8 @@ import httpx
 import json
 from typing import Dict, Any, Optional, List
 from loguru import logger
+from cachetools import cached, TTLCache
+import os
 
 from spiritualdata_utils import init_logger
 
@@ -76,6 +78,70 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+cache = TTLCache(maxsize=100, ttl=3600)  # Cache up to 100 items, data is valid for one hour
+@cached(cache)
+async def get_jwks() -> Dict[str, Any]:
+    try:
+        async with httpx.AsyncClient() as client:
+            clerk_url = os.getenv('CLERK_URL', 'https://api.clerk.dev')  # use a default value in case the environment variable is not set
+            res = await client.get(f'{clerk_url}/v1/jwks')
+            res.raise_for_status()  # This will raise an HTTPError if the response had an HTTP error status.
+            return res.json()
+    except httpx.HTTPStatusError:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired token")
+
+# JWT Verification and decoding
+async def decode_jwt(credentials):
+    """
+    Decode token and check that it was from one of our origins.
+    """
+    try:
+        jwt = await get_jwks()
+        token = credentials.credentials.replace("Bearer ", "")
+        header = jwt.get_unverified_header(token)
+        rsa_key = {}
+        for key in jwt["keys"]:
+            if key["kid"] == header["kid"]:
+                rsa_key = {
+                    "kty": key["kty"],
+                    "kid": key["kid"],
+                    "use": key["use"],
+                    "n": key["n"],
+                    "e": key["e"]
+                }
+        if rsa_key:
+                payload = jwt.decode(
+                    token,
+                    rsa_key,
+                    algorithms=["RS256"],
+                    options={"verify_exp": True}
+                )
+                
+                # Checking 'azp' claim against the origins
+                if 'azp' in payload:
+                    if payload['azp'] not in origins:
+                        raise HTTPException(
+                            status_code=401,
+                            detail="Invalid token",
+                        )
+
+                user_id = payload.get('sub')
+                if user_id is None:
+                    raise HTTPException(
+                        status_code=401,
+                        detail="Invalid token",
+                    )
+                return user_id
+    except JWTError:
+        raise HTTPException(
+            status_code=403,
+            detail="Access forbidden",
+        )
+    raise HTTPException(
+        status_code=403,
+        detail="Access forbidden",
+    )
+
 class ChatRequest(BaseModel):
     chat_id: str
     message: str
@@ -89,63 +155,12 @@ class ChatResponse(BaseModel):
     title: Optional[str]
     chat_id: Optional[str]
 
-# Fetch the JWT Key Set (JWKS) from the Clerk API
-async def get_jwks() -> Dict[str, Any]:
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.get('https://api.clerk.dev/v1/jwks')
-            res.raise_for_status()  # This will raise an HTTPError if the response had an HTTP error status.
-            return res.json()
-    except httpx.HTTPStatusError:
-        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired token")
-
-# JWT Verification and decoding
-async def decode_jwt(token: str, jwks: dict):
-    header = jwt.get_unverified_header(token)
-    rsa_key = {}
-    for key in jwks["keys"]:
-        if key["kid"] == header["kid"]:
-            rsa_key = {
-                "kty": key["kty"],
-                "kid": key["kid"],
-                "use": key["use"],
-                "n": key["n"],
-                "e": key["e"]
-            }
-    if rsa_key:
-        try:
-            payload = jwt.decode(
-                token,
-                rsa_key,
-                algorithms=["RS256"],
-                options={"verify_exp": True}
-            )
-            return payload
-        except JWTError:
-            raise HTTPException(
-                status_code=403,
-                detail="Access forbidden",
-            )
-    raise HTTPException(
-        status_code=403,
-        detail="Access forbidden",
-    )
-
 # FastAPI endpoint
 @app.post("/chat/response", dependencies=[Depends(security)])
 async def chat(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    jwks = await get_jwks()
-    auth_token = credentials.credentials
-    payload = await decode_jwt(auth_token, jwks)
-    if auth_token:
-        auth_token = auth_token.replace("Bearer ", "")
-        payload = await decode_jwt(auth_token, jwks)
-        user_id = payload['sub']  # Get the user id from JWT payload
-    else:
-        user_id = 0  # Or handle it differently, for example by raising an error
-    user_id = 0
+    user_id = await decode_jwt(credentials)
+
     chat_id = request.chat_id
-    logger.info(request.return_results)
     chat_history, chat_id = get_chat_history(user_id, chat_id)
     message = request.message
     kwargs = {}
