@@ -40,7 +40,7 @@ from loguru import logger
 from collections import defaultdict
 import regex as re
 
-from spiritualchat.combine_docs_chain import NamespaceStuffDocumentsChain
+from spiritualchat.api_functions.combine_docs_chain import NamespaceStuffDocumentsChain
 from spiritualdata_utils import mongo_query_db, mongo_connect_db
 
 

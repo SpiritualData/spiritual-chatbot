@@ -1,9 +1,27 @@
-curl -X POST http://18.189.128.76:8000/chat/response \
--H "Content-Type: application/json" \
--H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Imluc18yUlZSUzN1Q3dLR0RNQVRwWEtQM3FrSzV5VDkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJleHAiOjE2ODc3MjE3NDAsImlhdCI6MTY4NzcyMTY4MCwiaXNzIjoiaHR0cHM6Ly9zaW5ndWxhci10ZXJyYXBpbi03LmNsZXJrLmFjY291bnRzLmRldiIsIm5iZiI6MTY4NzcyMTY3MCwic2lkIjoic2Vzc18yUmk4alpPY0NsWHdPSG5nZjNhVm94UlVaQ3IiLCJzdWIiOiJ1c2VyXzJSZW9Qem0ySDVtR1Jwc3phZzZJelNCUHkxVSJ9.yj6pW9fYjivcb0Y40mOoVTeyz9xNWFy6s1n1Y7aJ5jsYVmQr9rzswAP0Kvne9pHD8Z65_qfyDspg-WpNuzO_Gi2oAT1g0JpNdc245_ea4RIpJlKg5HedrQnf8xRIc9ztPZl3635LSraXW-u5dinTY3GQmIV9Nr8heH18KRw8uZnURSQsKgVnEuFQyFvgMFcqkmT45Ap5mNTV2Mh7b0HTYQwFIp6PKnAsydMvHG01cSpZ2efz2rQVKpXUkzRsY2WZsoW7JwndMAEAgwNy4qlqpYyGqji5DQcE85G1qFM7y6iXliN5lSqx8b7RSIxHjFcoCmsjeQvTt6O6hCGs7YQP6Q" \
--d '{"message":"Is there evidence that we can communicate through telepathy while in our physical bodies?", "chat_id": "", "return_results": false, "answer_model":"gpt-3.5-turbo"}'
+# Make sure to set token before running this: export token=""
 
-# curl -X POST http://localhost:8000/chat/response \
+# curl -X POST http://api.qa.spiritualdata.org/chat/response \
 # -H "Content-Type: application/json" \
-# -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Imluc18yUlZSUzN1Q3dLR0RNQVRwWEtQM3FrSzV5VDkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJleHAiOjE2ODc3MjE3NDAsImlhdCI6MTY4NzcyMTY4MCwiaXNzIjoiaHR0cHM6Ly9zaW5ndWxhci10ZXJyYXBpbi03LmNsZXJrLmFjY291bnRzLmRldiIsIm5iZiI6MTY4NzcyMTY3MCwic2lkIjoic2Vzc18yUmk4alpPY0NsWHdPSG5nZjNhVm94UlVaQ3IiLCJzdWIiOiJ1c2VyXzJSZW9Qem0ySDVtR1Jwc3phZzZJelNCUHkxVSJ9.yj6pW9fYjivcb0Y40mOoVTeyz9xNWFy6s1n1Y7aJ5jsYVmQr9rzswAP0Kvne9pHD8Z65_qfyDspg-WpNuzO_Gi2oAT1g0JpNdc245_ea4RIpJlKg5HedrQnf8xRIc9ztPZl3635LSraXW-u5dinTY3GQmIV9Nr8heH18KRw8uZnURSQsKgVnEuFQyFvgMFcqkmT45Ap5mNTV2Mh7b0HTYQwFIp6PKnAsydMvHG01cSpZ2efz2rQVKpXUkzRsY2WZsoW7JwndMAEAgwNy4qlqpYyGqji5DQcE85G1qFM7y6iXliN5lSqx8b7RSIxHjFcoCmsjeQvTt6O6hCGs7YQP6Q" \
+# -H "Authorization: Bearer $token"\
 # -d '{"message":"Is there evidence that we can communicate through telepathy while in our physical bodies?", "chat_id": "", "return_results": false, "answer_model":"gpt-3.5-turbo"}'
+
+
+# Save the response in a variable
+response=$(curl -X POST http://localhost:8000/chat/response \
+-H "Content-Type: application/json" \
+-H "Authorization: Bearer $token" \
+-d '{"message":"Is there evidence that we can communicate through telepathy while in our physical bodies?", "chat_id": "", "return_results": false, "answer_model":"gpt-3.5-turbo", "save": true}'
+)
+
+# Extract the chat_id from the response
+chat_id=$(echo $response | jq -r '.chat_id')
+
+echo "Chat ID: $chat_id"
+
+# Use the chat_id in /chat/get request
+curl -X GET "http://localhost:8000/chat/get?chat_id=$chat_id" \
+-H "Authorization: Bearer $token"\
+
+# Use the chat_id in /chat/delete request
+curl -X DELETE "http://localhost:8000/chat/delete?chat_id=$chat_id" \
+-H "Authorization: Bearer $token"\

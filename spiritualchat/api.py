@@ -46,12 +46,13 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from spiritualchat import query_chatbot, get_chat_history
+from spiritualchat.api_functions.query_chatbot import query_chatbot
+from spiritualchat.api_functions.chat_history import get_chat_history_manager
 from jose import jwt, JWTError
 from jose.utils import base64url_decode
 import httpx
 import json
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from loguru import logger
 from cachetools import cached, TTLCache
 import os
@@ -147,6 +148,7 @@ class ChatRequest(BaseModel):
     return_results: Optional[bool]
     data_sources: Optional[List[str]]
     answer_model: Optional[str]
+    save: Optional[bool]
 
 class ChatResponse(BaseModel):
     ai: str
@@ -157,10 +159,10 @@ class ChatResponse(BaseModel):
 # FastAPI endpoint
 @app.post("/chat/response", dependencies=[Depends(security)])
 async def chat(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    user_id = await decode_jwt(credentials)
-
+    # user_id = await decode_jwt(credentials)
+    user_id = 0
     chat_id = request.chat_id
-    chat_history, chat_id = get_chat_history(user_id, chat_id)
+    chat_history, chat_id = get_chat_history_manager().get_chat_history(user_id, chat_id)
     message = request.message
     kwargs = {}
     if request.data_sources is not None:
@@ -169,8 +171,57 @@ async def chat(request: ChatRequest, credentials: HTTPAuthorizationCredentials =
         kwargs['return_results'] = request.return_results
     if request.answer_model is not None:
         kwargs['answer_model'] = request.answer_model
+    if request.save is not None:
+        kwargs['save'] = request.save
     response = query_chatbot(message, chat_history, **kwargs)
     api_response = ChatResponse(**response)
     api_response.chat_id = chat_id
 
     return api_response
+
+
+class ChatHistoryResponse(BaseModel):
+    chat_id: str
+    title: str
+
+@app.get("/chat/list", response_model=List[ChatHistoryResponse], dependencies=[Depends(security)])
+async def get_chat_history(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # user_id = await decode_jwt(credentials)
+    user_id = 0
+    chats = get_chat_history_manager().get_user_chats(user_id)
+    response = [ChatHistoryResponse(chat_id=chat_id, title=chat.get('title') or "Chat Title") for chat_id, chat in chats.items()]
+    
+    return response
+
+
+class ChatDataResponse(BaseModel):
+    chat_id: str
+    chat: List[dict]
+
+@app.get("/chat/get", response_model=ChatDataResponse, dependencies=[Depends(security)])
+async def get_chat(chat_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # user_id = await decode_jwt(credentials)
+    user_id=0
+    chat, chat_id = get_chat_history_manager().get_chat_history(user_id, chat_id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    chat_data = [{"role": type(message).__name__.lower(), "content": message.content} for message in chat.messages]
+    response = ChatDataResponse(chat_id=chat_id, chat=chat_data)
+    
+    return response
+
+
+class DeleteChatResponse(BaseModel):
+    success: bool
+
+@app.delete("/chat/delete", response_model=DeleteChatResponse, dependencies=[Depends(security)])
+async def delete_chat(chat_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # user_id = await decode_jwt(credentials)
+    user_id = 0
+
+    success = get_chat_history_manager().delete_chat(user_id, chat_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    return DeleteChatResponse(success=success)

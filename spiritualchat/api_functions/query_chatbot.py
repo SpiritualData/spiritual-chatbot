@@ -10,35 +10,15 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationBufferWindowMemory
 from spiritualchat.vectorstores import vector_index
-from spiritualchat.pinecone_namespacesearch import PineconeNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
-from spiritualchat.prompts import create_condense_prompt, QA_PROMPT
-from langchain.memory.chat_message_histories.in_memory import ChatMessageHistory
+from spiritualchat.api_functions.pinecone_namespacesearch import PineconeNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
+from spiritualchat.api_functions.prompts import create_condense_prompt, QA_PROMPT
 from langchain.embeddings.openai import OpenAIEmbeddings
 from loguru import logger
-from collections import defaultdict
 
-chat_history = defaultdict(lambda: defaultdict(list))
-last_chat_id = 0
-def get_chat_history(user_id: str, chat_id: str):
-    global chat_history
-    global last_chat_id
-    found_history = None
-    if not chat_id:
-        chat_id = last_chat_id + 1
-        last_chat_id = chat_id
-        found_history = ChatMessageHistory()
-        chat_history[user_id][chat_id] = found_history
-        logger.info('instantiated chat history: '+str(found_history))
-    return found_history.messages, chat_id
-
-# def append_chat_history(user_id: str, chat_id: str, message: str):
-#     global chat_history
-#     # TODO
-#     chat_history[user_id][chat_id].add_message(message)
 
 chain = None
 embeddings = OpenAIEmbeddings(chunk_size=1000)
-def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'research', 'hypotheses'], title=None, memory_k=2, parsing_model='gpt-3.5-turbo', answer_model='gpt-3.5-turbo', max_tokens_limit=4000, return_results=True, **kwargs):
+def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'research', 'hypotheses'], title=None, memory_k=2, parsing_model='gpt-3.5-turbo', answer_model='gpt-3.5-turbo', max_tokens_limit=4000, return_results=True, save=True, **kwargs):
     """
     Returns:
         {
@@ -90,7 +70,8 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
                 input_key="question", 
                 output_key=output_key, 
                 ai_prefix='Chatbot', 
-                human_prefix='User'),
+                human_prefix='User',
+                chat_memory=chat_history),
             max_tokens_limit=max_tokens_limit,
             combine_docs_chain_kwargs=kwargs,
             verbose=False
@@ -115,5 +96,11 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
             db_results[namespace] = formatted_sources
         response['db_results'] = db_results
     if 'title' in result:
-        response['title'] = result['title']
+        title = result['title']
+        response['title'] = title
+    else:
+        # Don't need to store title since it was already stored in an earlier call
+        title = None
+    if save:
+        chat_history.save_chat(title=title)
     return response
