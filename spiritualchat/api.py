@@ -56,7 +56,7 @@ from typing import Dict, Any, Optional, List, Union
 from loguru import logger
 from cachetools import cached, TTLCache
 import os
-
+import datetime
 from spiritualdata_utils import init_logger
 
 init_logger()
@@ -69,26 +69,33 @@ security = HTTPBearer()
 origins_str = os.environ.get('ORIGINS')
 origins = origins_str.split(',')
 origins_set = set(origins)
+logger.info('origins: '+str(origins))
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-cache = TTLCache(maxsize=1, ttl=3600)  # Cache up to 100 items, data is valid for one hour
-@cached(cache)
-async def get_jwks() -> Dict[str, Any]:
-    try:
-        async with httpx.AsyncClient() as client:
-            clerk_url = os.getenv('CLERK_URL', 'https://api.clerk.dev')  # use a default value in case the environment variable is not set
-            res = await client.get(f'{clerk_url}/v1/jwks')
-            res.raise_for_status()  # This will raise an HTTPError if the response had an HTTP error status.
-            return res.json()
-    except httpx.HTTPStatusError:
-        raise HTTPException(status_code=401, detail="Unauthorized: Invalid or expired token")
+class JWKS:
+    def __init__(self):
+        self.jwks = None
+        self.expiration = None
+
+    async def get(self):
+        now = datetime.datetime.now()
+        if self.jwks is None or self.expiration < now:
+            async with httpx.AsyncClient() as client:
+                clerk_url = os.getenv('CLERK_URL', 'https://api.clerk.dev')  # use a default value in case the environment variable is not set
+                res = await client.get(f'{clerk_url}/v1/jwks')
+                res.raise_for_status()  # This will raise an HTTPError if the response had an HTTP error status.
+                self.jwks = res.json()
+                self.expiration = now + datetime.timedelta(hours=1)  # expire after one hour
+        return self.jwks
+
+jwks = JWKS()
 
 # JWT Verification and decoding
 async def decode_jwt(credentials):
@@ -96,7 +103,7 @@ async def decode_jwt(credentials):
     Decode token and check that it was from one of our origins.
     """
     try:
-        jwt = await get_jwks()
+        jwt = await jwks.get()  # Use the new get_jwks function
         token = credentials.credentials.replace("Bearer ", "")
         header = jwt.get_unverified_header(token)
         rsa_key = {}
