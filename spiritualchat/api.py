@@ -159,8 +159,8 @@ class ChatResponse(BaseModel):
 # FastAPI endpoint
 @app.post("/chat/response", dependencies=[Depends(security)])
 async def chat(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # user_id = await decode_jwt(credentials)
-    user_id = 0
+    user_id = await decode_jwt(credentials)
+
     chat_id = request.chat_id
     chat_history, chat_id = get_chat_history_manager().get_chat_history(user_id, chat_id)
     message = request.message
@@ -186,8 +186,8 @@ class ChatHistoryResponse(BaseModel):
 
 @app.get("/chat/list", response_model=List[ChatHistoryResponse], dependencies=[Depends(security)])
 async def get_chat_history(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # user_id = await decode_jwt(credentials)
-    user_id = 0
+    user_id = await decode_jwt(credentials)
+
     chats = get_chat_history_manager().get_user_chats(user_id)
     response = [ChatHistoryResponse(chat_id=chat_id, title=chat.get('title') or "Chat Title") for chat_id, chat in chats.items()]
     
@@ -200,8 +200,8 @@ class ChatDataResponse(BaseModel):
 
 @app.get("/chat/get", response_model=ChatDataResponse, dependencies=[Depends(security)])
 async def get_chat(chat_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # user_id = await decode_jwt(credentials)
-    user_id=0
+    user_id = await decode_jwt(credentials)
+
     chat, chat_id = get_chat_history_manager().get_chat_history(user_id, chat_id)
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -217,8 +217,7 @@ class DeleteChatResponse(BaseModel):
 
 @app.delete("/chat/delete", response_model=DeleteChatResponse, dependencies=[Depends(security)])
 async def delete_chat(chat_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # user_id = await decode_jwt(credentials)
-    user_id = 0
+    user_id = await decode_jwt(credentials)
 
     success = get_chat_history_manager().delete_chat(user_id, chat_id)
     if not success:

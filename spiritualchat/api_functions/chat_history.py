@@ -12,6 +12,8 @@ from langchain.schema import (
 from langchain.memory.chat_message_histories.in_memory import ChatMessageHistory
 from langchain.schema.messages import BaseMessage, _message_to_dict, messages_from_dict
 from pymongo import MongoClient, errors
+from bson.errors import InvalidId
+from fastapi import HTTPException
 
 DEFAULT_DBNAME = "user_interaction"
 DEFAULT_COLLECTION_NAME = "chats"
@@ -38,7 +40,10 @@ class ChatHistoryManager:
         return self.loaded_chats[(user_id, chat_id)], chat_id
 
     def _load_chat_history(self, user_id: str, chat_id: str):
-        document = self.mongo_collection.find_one({"_id": ObjectId(chat_id), "user_id": user_id})
+        try:
+            result = self.mongo_collection.delete_one({"_id": ObjectId(chat_id), "user_id": user_id})
+        except InvalidId:
+            raise HTTPException(status_code=400, detail="Invalid chat_id format: "+str(chat_id))
         if document:
             # If a chat history exists in MongoDB, load it into a HybridChatHistory object
             history = document.get('history', [])
