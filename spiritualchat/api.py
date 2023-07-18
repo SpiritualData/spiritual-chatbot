@@ -97,57 +97,36 @@ class JWKS:
 
 jwks = JWKS()
 
-# JWT Verification and decoding
-async def decode_jwt(credentials):
-    """
-    Decode token and check that it was from one of our origins.
-    """
-    try:
-        jwt = await jwks.get()  # Use the new get_jwks function
-        token = credentials.credentials.replace("Bearer ", "")
-        header = jwt.get_unverified_header(token)
-        rsa_key = {}
-        for key in jwt["keys"]:
-            if key["kid"] == header["kid"]:
-                rsa_key = {
-                    "kty": key["kty"],
-                    "kid": key["kid"],
-                    "use": key["use"],
-                    "n": key["n"],
-                    "e": key["e"]
-                }
-        if rsa_key:
-                payload = jwt.decode(
-                    token,
-                    rsa_key,
-                    algorithms=["RS256"],
-                    options={"verify_exp": True}
-                )
-                
-                # Checking 'azp' claim against the origins
-                if 'azp' in payload:
-                    if payload['azp'] not in origins_set:
-                        raise HTTPException(
-                            status_code=401,
-                            detail="Invalid token",
-                        )
+async def decode_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    clerk_secret = os.getenv('CLERK_SECRET')  # Replace with your Clerk Secret
+    clerk_url = os.getenv('CLERK_URL', 'https://api.clerk.dev')
+    
+    headers = {
+        "Authorization": f"Bearer {clerk_secret}",
+        "Clerk-Session-Id": token
+    }
 
-                user_id = payload.get('sub')
-                if user_id is None:
-                    raise HTTPException(
-                        status_code=401,
-                        detail="Invalid token",
-                    )
-                return user_id
-    except JWTError:
+    async with httpx.AsyncClient() as client:
+        res = await client.get(f'{clerk_url}/v1/sessions/verify', headers=headers)
+
+    if res.status_code != 200:
         raise HTTPException(
-            status_code=403,
-            detail="Access forbidden",
+            status_code=res.status_code,
+            detail="Invalid token",
         )
-    raise HTTPException(
-        status_code=403,
-        detail="Access forbidden",
-    )
+
+    data = res.json()
+    user_id = data.get('sub')
+
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token",
+        )
+
+    return user_id
+
 
 class ChatRequest(BaseModel):
     chat_id: str
