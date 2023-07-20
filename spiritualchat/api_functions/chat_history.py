@@ -27,22 +27,32 @@ def get_chat_history_manager():
 
 class ChatHistoryManager:
     def __init__(self, mongo_collection):
+        logger.info(f'About to init chat history manager for collection {mongo_collection}')
         self.mongo_collection = mongo_collection
         self.loaded_chats = {}
         self.mongo_collection.create_index("user_id")
+        logger.info(f'Initialized chat history manager for collection {self.mongo_collection}')
 
     def get_chat_history(self, user_id: str, chat_id: str = None):
+        logger.info(f'About to get chat history for user_id: {user_id} chat_id: {chat_id}')
+        if isinstance(chat_id, str):
+            chat_id = chat_id.strip()
         if not chat_id:
+            logger.info('about to insert new chat')
             inserted = self.mongo_collection.insert_one({"user_id": user_id, "messages": []})
             chat_id = str(inserted.inserted_id)
+            logger.info(f'Got new chat_id: {inserted.inserted_id}')
         if (user_id, chat_id) not in self.loaded_chats:
             self.loaded_chats[(user_id, chat_id)] = self._load_chat_history(user_id, chat_id)
+        logger.info(f'got chat_history for user_id: {user_id} chat_id: {chat_id}')
         return self.loaded_chats[(user_id, chat_id)], chat_id
 
     def _load_chat_history(self, user_id: str, chat_id: str):
+        logger.info(f'About to load chat history for user_id: {user_id} chat_id: {chat_id}')
         try:
-            result = self.mongo_collection.delete_one({"_id": ObjectId(chat_id), "user_id": user_id})
-        except InvalidId:
+            document = self.mongo_collection.find_one({"_id": ObjectId(chat_id), "user_id": user_id}, {"history": 1})
+        except InvalidId as e:
+            logger.error(e)
             raise HTTPException(status_code=400, detail="Invalid chat_id format: "+str(chat_id))
         if document:
             # If a chat history exists in MongoDB, load it into a HybridChatHistory object
@@ -62,7 +72,7 @@ class ChatHistoryManager:
 
         # Convert each document into a dict with id and title
         user_chats = {str(doc['_id']): {"title": doc.get("title")} for doc in documents}
-
+        logger.info(f'Got user chats: {len(user_chats)} for user_id: {user_id}')
         return user_chats
 
     def delete_chat(self, user_id: str, chat_id: str):

@@ -18,7 +18,7 @@ from loguru import logger
 
 chain = None
 embeddings = OpenAIEmbeddings(chunk_size=1000)
-def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'research', 'hypotheses'], title=None, memory_k=2, parsing_model='gpt-3.5-turbo', answer_model='gpt-3.5-turbo', max_tokens_limit=4000, return_results=True, save=True, **kwargs):
+def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'research', 'hypotheses'], title=None, memory_k=2, parsing_model='gpt-3.5-turbo', answer_model='gpt-3.5-turbo', max_tokens_limit=4000, return_results=True, save=True, timeout_seconds=180, **kwargs):
     """
     Returns:
         {
@@ -55,14 +55,15 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
     """
     global chain
     global embeddings
+    logger.info('kwargs:', kwargs)
     kwargs['prompt'] = QA_PROMPT
     output_key = "answer"
     if chain is None:
         chain = NamespaceSearchConversationalRetrievalChain.from_llm(
-            llm=ChatOpenAI(temperature=0,model_name=parsing_model),
+            llm=ChatOpenAI(temperature=0,model_name=parsing_model,request_timeout=timeout_seconds),
             retriever=PineconeNamespaceSearchRetriever(embeddings=embeddings, index=vector_index),
             condense_question_prompt=create_condense_prompt(generate_title=title is None, namespaces=namespaces),
-            condense_question_llm=ChatOpenAI(temperature=0,model_name=answer_model),
+            condense_question_llm=ChatOpenAI(temperature=0,model_name=answer_model,request_timeout=timeout_seconds),
             output_key=output_key,
             # We only keep the last k interactions in memory
             memory=ConversationBufferWindowMemory(k=memory_k,
