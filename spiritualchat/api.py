@@ -161,7 +161,6 @@ class ChatResponse(BaseModel):
 async def respond(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = await decode_jwt(credentials)
     chat_id = request.chat_id
-    chat_id = ""
     logger.info('chat_id:', chat_id)
     chat_history, chat_id = get_chat_history_manager().get_chat_history(user_id, chat_id)
     message = request.message
