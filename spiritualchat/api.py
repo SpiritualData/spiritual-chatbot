@@ -161,6 +161,7 @@ class ChatResponse(BaseModel):
 async def respond(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = await decode_jwt(credentials)
     chat_id = request.chat_id
+    chat_id = ""
     logger.info('chat_id:', chat_id)
     chat_history, chat_id = get_chat_history_manager().get_chat_history(user_id, chat_id)
     message = request.message
@@ -207,7 +208,7 @@ async def get_chat(chat_id: str, credentials: HTTPAuthorizationCredentials = Dep
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
 
-    chat_data = [{"role": type(message).__name__.lower(), "content": message.content} for message in chat.messages]
+    chat_data = [{"role": 'ai' if 'ai' in type(message).__name__.lower() else 'user', "content": message.content} for message in chat.messages]
     response = ChatDataResponse(chat_id=chat_id, chat=chat_data)
     
     return response

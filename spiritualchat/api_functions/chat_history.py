@@ -121,7 +121,7 @@ class HybridChatHistory(BaseChatMessageHistory):
         """
         # Push all buffered messages to MongoDB and update the title field
         self.collection.update_one(
-            {"user_id": self.user_id, "_id": self.chat_id},
+            {"user_id": self.user_id, "_id": ObjectId(self.chat_id)},
             {"$push": {"history": {"$each": self.messages_buffer}}, "$set": {"title": title}},
             upsert=True
         )
@@ -131,6 +131,6 @@ class HybridChatHistory(BaseChatMessageHistory):
     def clear(self):
         self.chat_message_history.clear()
         try:
-            self.collection.delete_many({"user_id": self.user_id, "chat_id": self.chat_id})
+            self.collection.delete_many({"user_id": self.user_id, "chat_id": ObjectId(chat_id)})
         except errors.WriteError as err:
             logger.error(err)

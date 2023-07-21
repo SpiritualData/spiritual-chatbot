@@ -8,7 +8,7 @@ from langchain.prompts.chat import (
 def create_condense_prompt(generate_title=True, namespaces=["hypotheses", "research", "experiences"]):
     title = ""
     if generate_title:
-        title = """"title": "<Title for this chat conversation based on user input>",
+        title = """"title": "<title (25 characters max) for this chat conversation based on user input>",
 """
     json_queries = ""
     explanation = ""
