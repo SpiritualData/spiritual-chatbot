@@ -71,10 +71,68 @@ d. Install the spiritual-chatbot in development mode using pip:
    pip install -e .
    ```
 
-### 5. Verify the Installation
+### Setting Environment Variables Using bashrc_spiritualdata_dev
 
-You can check the installation by running any commands or scripts provided by the spiritual-chatbot. Refer to the project's documentation for specific usage instructions.
+If you have a file named `bashrc_spiritualdata_dev` that contains environment variables needed for development, you can source this file to set those variables:
+
+1. Navigate to the directory containing `bashrc_spiritualdata_dev`:
+
+   ```bash
+   cd path/to/directory
+   ```
+
+2. Source the file:
+
+   ```bash
+   source bashrc_spiritualdata_dev
+   ```
+
+This will set the environment variables defined in the file for your current session. You may want to include this step in your startup scripts if you need these variables every time you work on the project.
+
+### Running the FastAPI Server
+
+FastAPI is a web framework that allows you to create APIs quickly. Given there's a file `spiritual-chatbot/spiritual_chat/api.py`, you can run the FastAPI server with the following steps:
+
+1. Activate your virtual environment if not already activated.
+
+2. Navigate to the directory containing `api.py`:
+
+   ```bash
+   cd spiritual-chatbot/spiritual_chat
+   ```
+
+3. Run the FastAPI server:
+
+   ```bash
+   uvicorn api:app --reload
+   ```
+
+   This command assumes that `app` is the FastAPI instance in your `api.py` file. The `--reload` flag makes the server restart upon code changes, which is useful during development.
+
+4. You can access the API documentation at `http://127.0.0.1:8000/docs` in your web browser.
+
+### Running Tests with pytest
+
+To run the tests for the spiritual-chatbot project using pytest, follow these steps:
+
+1. Make sure pytest is installed in your virtual environment. If not, install it:
+
+   ```bash
+   pip install pytest
+   ```
+
+2. Navigate to the tests directory:
+
+   ```bash
+   cd spiritual-chatbot/spiritual_chat/tests
+   ```
+
+3. Run the tests:
+
+   ```bash
+   pytest
+   ```
 
 ### Conclusion
 
-You should now have a working setup of the spiritual-chatbot and spiritualdata-utils. Make sure to consult the individual project documentation or community support channels if you encounter any issues or need further assistance.
+These instructions cover how to run the FastAPI server, execute tests with pytest, and set environment variables using a specific file. Always refer to the specific project documentation or consult with the development team if you encounter any specific issues or need further guidance.
