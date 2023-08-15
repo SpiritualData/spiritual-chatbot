@@ -73,21 +73,45 @@ d. Install the spiritual-chatbot in development mode using pip:
 
 ### Setting Environment Variables Using bashrc_spiritualdata_dev
 
-If you have a file named `bashrc_spiritualdata_dev` that contains environment variables needed for development, you can source this file to set those variables:
+To configure the environment variables needed for the spiritual-chatbot project, follow these steps:
 
-1. Navigate to the directory containing `bashrc_spiritualdata_dev`:
+1. **Update the LOG_DIR Variable**:
+   
+   Open the `bashrc_spiritualdata_dev` file in a text editor of your choice. Look for a line setting the `LOG_DIR` variable, and update it to a valid local filepath where logs will be stored (when using `logger.info()`). The line should look something like this:
+
+   ```bash
+   export LOG_DIR=/path/to/your/log/directory
+   ```
+
+   Replace `/path/to/your/log/directory` with the actual path where you want to store log files.
+
+2. **Set the OPENAI_API_KEY**:
+
+   You will also need to set your `OPENAI_API_KEY` with your personal API key. You can set this in the same `bashrc_spiritualdata_dev` file or export it separately in your shell. If you're setting it within the `bashrc_spiritualdata_dev` file, add the following line:
+
+   ```bash
+   export OPENAI_API_KEY=your-api-key-here
+   ```
+
+   Replace `your-api-key-here` with your actual OpenAI API key.
+
+   **Note**: Make sure to set your organization to Spiritual Data at [OpenAI's API keys page](https://platform.openai.com/account/api-keys) to use Spiritual Data's billing account.
+
+3. **Source the bashrc File**:
+
+   After editing the file, navigate to the directory containing `bashrc_spiritualdata_dev`:
 
    ```bash
    cd path/to/directory
    ```
 
-2. Source the file:
+   Then, source the file to apply the changes:
 
    ```bash
    source bashrc_spiritualdata_dev
    ```
 
-This will set the environment variables defined in the file for your current session. You may want to include this step in your startup scripts if you need these variables every time you work on the project.
+By following these steps, you'll configure the environment variables necessary for the spiritual-chatbot project, including the log directory and OpenAI API key.
 
 ### Running the FastAPI Server
 
