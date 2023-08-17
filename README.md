@@ -115,14 +115,14 @@ By following these steps, you'll configure the environment variables necessary f
 
 ### Running the FastAPI Server
 
-FastAPI is a web framework that allows you to create APIs quickly. Given there's a file `spiritual-chatbot/spiritual_chat/api.py`, you can run the FastAPI server with the following steps:
+FastAPI is a web framework that allows you to create APIs quickly. Given there's a file `spiritual-chatbot/spiritualchat/api.py`, you can run the FastAPI server with the following steps:
 
 1. Activate your virtual environment if not already activated.
 
 2. Navigate to the directory containing `api.py`:
 
    ```bash
-   cd spiritual-chatbot/spiritual_chat
+   cd spiritual-chatbot/spiritualchat
    ```
 
 3. Run the FastAPI server:
@@ -148,7 +148,7 @@ To run the tests for the spiritual-chatbot project using pytest, follow these st
 2. Navigate to the tests directory:
 
    ```bash
-   cd spiritual-chatbot/spiritual_chat/tests
+   cd spiritual-chatbot/spiritualchat/tests
    ```
 
 3. Run the tests:
