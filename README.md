@@ -42,6 +42,7 @@ b. Navigate to the cloned directory:
 c. Install spiritualdata-utils in development mode:
 
    ```bash
+   pip install rc-repo-utils
    python setup.py develop
    ```
 
