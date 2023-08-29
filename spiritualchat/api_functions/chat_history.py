@@ -10,7 +10,7 @@ from langchain.schema import (
     BaseChatMessageHistory,
 )
 from langchain.memory.chat_message_histories.in_memory import ChatMessageHistory
-from langchain.schema.messages import BaseMessage, _message_to_dict, messages_from_dict
+from langchain.schema.messages import BaseMessage, _message_to_dict, messages_from_dict, _message_from_dict
 from pymongo import MongoClient, errors
 from bson.errors import InvalidId
 from fastapi import HTTPException
