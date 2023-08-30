@@ -92,7 +92,7 @@ Reference: https://github.com/hwchase17/langchain/blob/master/langchain/memory/c
 
 def chat_history_to_str(chat_history, max_per_message=1000, max_messages=2):
     chat_history_str = ""
-    if chat_history and hasattr(chat_history, messages):
+    if chat_history and hasattr(chat_history, 'messages'):
         for i, message in enumerate(chat_history.messages):
             content = message.content[:max_per_message]
             chat_history_str += f"{message.name}: {content}" + "\n"
