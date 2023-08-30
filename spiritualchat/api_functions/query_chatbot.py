@@ -78,7 +78,8 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
             combine_docs_chain_kwargs=kwargs,
             verbose=False
         )
-    result = chain(inputs=dict(question=user_input, chat_history=chat_history, chat_history_str=chat_history_to_str(chat_history, max_messages=memory_k)))
+    chat_history_str = chat_history_to_str(chat_history, max_messages=memory_k)
+    result = chain(inputs=dict(question=user_input, chat_history=chat_history, chat_history_str=chat_history_str), chat_history_str=chat_history_str)
     response = {'ai': result['answer']}
     if return_results:
         db_results = {}
