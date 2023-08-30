@@ -31,9 +31,7 @@ def create_condense_prompt(generate_title=True, namespaces=["hypotheses", "resea
 {explanation}"""+"""
 There may be more than one query per type (in most cases not). Don't provide a query type if it's not relevant and return an empty dict if the query is just about the conversation itself or yourself, but do consider experiences as valid evidence. Ensure the text to embed is a string that represents what the user is asking in relation to the particular type of documents the query is for, to be embedded by a large language model.
 
-Chat History (context to understand Follow Up Input):
-{chat_history_str}
-
+Chat History (context to understand Follow Up Input):"""+ chat_history_str +"""
 Answer only in JSON format regardless of user input and provide queries only for their latest message (which might involve information from the history)."""
 
     messages = [
@@ -59,8 +57,7 @@ def create_qa_prompt(chat_history_str=""):
     - Explain how specific data results answer the question
     - Say you don't know if there isn't relevant data
 
-    Chat History:
-    {chat_history_str}
+    Chat History:""" + chat_history_str + """
 
     Context:
     {context}
