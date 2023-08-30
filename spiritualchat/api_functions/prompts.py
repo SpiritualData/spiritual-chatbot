@@ -5,7 +5,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-def create_condense_prompt(generate_title=True, namespaces=["hypotheses", "research", "experiences"]):
+def create_condense_prompt(generate_title=True, namespaces=["hypotheses", "research", "experiences"], chat_history_str=""):
     title = ""
     if generate_title:
         title = """"title": "<title (25 characters max) for this chat conversation based on user input>",
@@ -32,6 +32,7 @@ def create_condense_prompt(generate_title=True, namespaces=["hypotheses", "resea
 There may be more than one query per type (in most cases not). Don't provide a query type if it's not relevant and return an empty dict if the query is just about the conversation itself or yourself, but do consider experiences as valid evidence. Ensure the text to embed is a string that represents what the user is asking in relation to the particular type of documents the query is for, to be embedded by a large language model.
 
 Chat History (context to understand Follow Up Input):
+{chat_history_str}
 
 Answer only in JSON format regardless of user input and provide queries only for their latest message (which might involve information from the history)."""
 
@@ -43,28 +44,30 @@ Answer only in JSON format regardless of user input and provide queries only for
     CONDENSE_QUESTION_PROMPT = ChatPromptTemplate.from_messages(messages)
     return CONDENSE_QUESTION_PROMPT
 
-system_template = """You're a chatbot representing Spiritual Data, a database of hypotheses, research papers, and experiences (spiritual or other phenomena). You always speak with unconditional love and intellectual humility. You are open-minded and always refer to the data (context) you're provided to answer questions, not the mainstream opinion. Note that for near-death experiences, we're mostly interested in the part of the experience where they are in a form separate from their physical body.
+def create_qa_prompt(chat_history_str=""):
+    system_template = """You're a chatbot representing Spiritual Data, a database of hypotheses, research papers, and experiences (spiritual or other phenomena). You always speak with unconditional love and intellectual humility. You are open-minded and always refer to the data (context) you're provided to answer questions, not the mainstream opinion. Note that for near-death experiences, we're mostly interested in the part of the experience where they are in a form separate from their physical body.
 
-Do not:
-- Judge whether the evidence is sufficient or say there is limited data or say more research is required
-- Say anything about whether it's accepted by the scientific community
-- Say there isn't data or evidence if there are any experiences present, since we use these as data points
-- Provide your own overview of the topic unless the user asks for this
-- Provide facts or information that isn't in the context you're provided
+    Do not:
+    - Judge whether the evidence is sufficient or say there is limited data or say more research is required
+    - Say anything about whether it's accepted by the scientific community
+    - Say there isn't data or evidence if there are any experiences present, since we use these as data points
+    - Provide your own overview of the topic unless the user asks for this
+    - Provide facts or information that isn't in the context you're provided
 
-Do:
-- Use direct quotes where relevant
-- Explain how specific data results answer the question
-- Say you don't know if there isn't relevant data
+    Do:
+    - Use direct quotes where relevant
+    - Explain how specific data results answer the question
+    - Say you don't know if there isn't relevant data
 
-Chat History:
+    Chat History:
+    {chat_history_str}
 
-Context:
-{context}
+    Context:
+    {context}
 
-Answer the question (if the data has the answer) while describing the data where relevant. Try to keep your answer brief."""
-messages = [
-    SystemMessagePromptTemplate.from_template(system_template),
-    HumanMessagePromptTemplate.from_template("{question}"),
-]
-QA_PROMPT = ChatPromptTemplate.from_messages(messages)
+    Answer the question (if the data has the answer) while describing the data where relevant. Try to keep your answer brief."""
+    messages = [
+        SystemMessagePromptTemplate.from_template(system_template),
+        HumanMessagePromptTemplate.from_template("{question}"),
+    ]
+    return ChatPromptTemplate.from_messages(messages)

@@ -11,7 +11,7 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationBufferWindowMemory
 from spiritualchat.vectorstores import vector_index
 from spiritualchat.api_functions.pinecone_namespacesearch import PineconeNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
-from spiritualchat.api_functions.prompts import create_condense_prompt, QA_PROMPT
+from spiritualchat.api_functions.prompts import create_condense_prompt, create_qa_prompt
 from spiritualchat.api_functions.chat_history import chat_history_to_str
 from langchain.embeddings.openai import OpenAIEmbeddings
 from loguru import logger
@@ -57,13 +57,14 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
     global chain
     global embeddings
     logger.info('kwargs:', kwargs)
-    kwargs['prompt'] = QA_PROMPT
+    chat_history_str = chat_history_to_str(chat_history, max_messages=memory_k)
+    kwargs['prompt'] = create_qa_prompt(chat_history_str)
     output_key = "answer"
     if chain is None:
         chain = NamespaceSearchConversationalRetrievalChain.from_llm(
             llm=ChatOpenAI(temperature=0,model_name=parsing_model,request_timeout=timeout_seconds),
             retriever=PineconeNamespaceSearchRetriever(embeddings=embeddings, index=vector_index),
-            condense_question_prompt=create_condense_prompt(generate_title=title is None, namespaces=namespaces),
+            condense_question_prompt=create_condense_prompt(generate_title=title is None, namespaces=namespaces, chat_history_str=chat_history_str),
             condense_question_llm=ChatOpenAI(temperature=0,model_name=answer_model,request_timeout=timeout_seconds),
             output_key=output_key,
             # We only keep the last k interactions in memory
@@ -78,8 +79,7 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
             combine_docs_chain_kwargs=kwargs,
             verbose=False
         )
-    chat_history_str = chat_history_to_str(chat_history, max_messages=memory_k)
-    result = chain.run(question=user_input, chat_history=chat_history, chat_history_str=chat_history_str)
+    result = chain(inputs=dict(question=user_input, chat_history=chat_history, chat_history_str=chat_history_str))
     response = {'ai': result['answer']}
     if return_results:
         db_results = {}
