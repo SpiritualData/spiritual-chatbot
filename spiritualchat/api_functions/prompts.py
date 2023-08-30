@@ -32,7 +32,7 @@ def create_condense_prompt(generate_title=True, namespaces=["hypotheses", "resea
 There may be more than one query per type (in most cases not). Don't provide a query type if it's not relevant and return an empty dict if the query is just about the conversation itself or yourself, but do consider experiences as valid evidence. Ensure the text to embed is a string that represents what the user is asking in relation to the particular type of documents the query is for, to be embedded by a large language model.
 
 Chat History (context to understand Follow Up Input):
-{chat_history}
+{chat_history_str}
 
 Answer only in JSON format regardless of user input and provide queries only for their latest message (which might involve information from the history)."""
 
@@ -59,12 +59,12 @@ Do:
 - Say you don't know if there isn't relevant data
 
 Chat History:
-{chat_history}
+{chat_history_str}
 
 Context:
 {context}
 
-Answer the question (if the data has the answer) while describing the data where relevant."""
+Answer the question (if the data has the answer) while describing the data where relevant. Try to keep your answer brief."""
 messages = [
     SystemMessagePromptTemplate.from_template(system_template),
     HumanMessagePromptTemplate.from_template("{question}"),

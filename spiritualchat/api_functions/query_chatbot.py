@@ -12,6 +12,7 @@ from langchain.memory import ConversationBufferWindowMemory
 from spiritualchat.vectorstores import vector_index
 from spiritualchat.api_functions.pinecone_namespacesearch import PineconeNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
 from spiritualchat.api_functions.prompts import create_condense_prompt, QA_PROMPT
+from spiritualchat.api_functions.chat_history import chat_history_to_str
 from langchain.embeddings.openai import OpenAIEmbeddings
 from loguru import logger
 
@@ -77,7 +78,7 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
             combine_docs_chain_kwargs=kwargs,
             verbose=False
         )
-    result = chain(inputs=dict(question=user_input, chat_history=chat_history))
+    result = chain(inputs=dict(question=user_input, chat_history=chat_history, chat_history_str=chat_history_to_str(chat_history_str, max_messages=memory_k)))
     response = {'ai': result['answer']}
     if return_results:
         db_results = {}
