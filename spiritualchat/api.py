@@ -86,7 +86,6 @@ app.add_middleware(
 # After 7 days, if an item is not accessed, it will be evicted from the cache.
 token_cache = TTLCache(maxsize=100000, ttl=7 * 24 * 60 * 60)
 
-VERIFY_CLERK_AUTH = int(os.environ.get('VERIFY_CLERK_AUTH', 0))
 CLERK_API_URL = "https://api.clerk.dev/v1"
 
 async def decode_jwt(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
@@ -117,19 +116,18 @@ async def decode_jwt(credentials: HTTPAuthorizationCredentials = Depends(HTTPBea
         
         logger.info(f'Got session {session_id}')
 
-        if VERIFY_CLERK_AUTH:
-            # Clerk's API endpoint for checking a session's status.
-            api_url = f"{CLERK_API_URL}/sessions/{session_id}/verify"
+        # Clerk's API endpoint for checking a session's status.
+        api_url = f"{CLERK_API_URL}/sessions/{session_id}/verify"
 
-            # Make a request to Clerk's API.
-            headers = {"Authorization": f"Bearer {os.getenv('CLERK_API_KEY')}", "Content-Type": "application/json"}
-            payload = {"token": token}
-            async with httpx.AsyncClient() as client:
-                response = await client.post(api_url, headers=headers, json=payload)
-            logger.info(f'Clerk response: {response}')
-            # Check if the session is active.
-            if response.status_code != 200:
-                raise HTTPException(status_code=401, detail="Invalid token.")
+        # Make a request to Clerk's API.
+        headers = {"Authorization": f"Bearer {os.getenv('CLERK_API_KEY')}", "Content-Type": "application/json"}
+        payload = {"token": token}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(api_url, headers=headers, json=payload)
+        logger.info(f'Clerk response: {response}')
+        # Check if the session is active.
+        if response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid token.")
 
         # If the session is active, we trust the user's identity.
         user_id = decoded_token.get('sub')
@@ -163,7 +161,6 @@ class ChatResponse(BaseModel):
 async def respond(request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_id = await decode_jwt(credentials)
     chat_id = request.chat_id
-    chat_id = ""
     logger.info('chat_id:', chat_id)
     chat_history, chat_id = get_chat_history_manager().get_chat_history(user_id, chat_id)
     message = request.message
@@ -188,9 +185,13 @@ class ChatHistoryResponse(BaseModel):
     chat_id: str
     title: str
 
-@app.get("/chat/list", response_model=List[ChatHistoryResponse], dependencies=[Depends(security)])
-async def get_chat_list(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    user_id = await decode_jwt(credentials)
+@app.get("/chat/list", response_model=List[ChatHistoryResponse]
+        #  , dependencies=[Depends(security)]
+         )
+async def get_chat_list(user_id: str,
+    # credentials: HTTPAuthorizationCredentials = Depends(security)
+    ):
+    # user_id = await decode_jwt(credentials)
 
     chats = get_chat_history_manager().get_user_chats(user_id)
     response = [ChatHistoryResponse(chat_id=chat_id, title=chat.get('title') or "Chat Title") for chat_id, chat in chats.items()]
