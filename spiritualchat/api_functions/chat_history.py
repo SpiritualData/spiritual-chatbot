@@ -97,7 +97,7 @@ def chat_history_to_str(chat_history, max_per_message=1000, max_messages=2):
     if chat_history and hasattr(chat_history, 'messages'):
         for i, message in enumerate(chat_history.messages):
             content = message.content[:max_per_message]
-            chat_history_str += f"{message.name}: {content}" + "\n"
+            chat_history_str += f"{message.type}: {content}" + "\n"
             if i + 1 >= max_messages:
                 break
     return chat_history_str
