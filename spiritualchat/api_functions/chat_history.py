@@ -14,6 +14,8 @@ from langchain.schema.messages import BaseMessage, _message_to_dict, messages_fr
 from pymongo import MongoClient, errors
 from bson.errors import InvalidId
 from fastapi import HTTPException
+import os
+
 
 DEFAULT_DBNAME = "user_interaction"
 DEFAULT_COLLECTION_NAME = "chats"
@@ -21,7 +23,7 @@ DEFAULT_COLLECTION_NAME = "chats"
 # Cache in memory all used chat histories for 1 hour
 @ttl_cache(maxsize=1, ttl=3600)
 def get_chat_history_manager():
-    mongo = mongo_connect_db(database_name=DEFAULT_DBNAME)
+    mongo = mongo_connect_db(uri=os.getenv('MONGOURI_CHATS', os.getenv('MONGOURI')), database_name=DEFAULT_DBNAME)
     chat_history_manager = ChatHistoryManager(mongo_collection=mongo[DEFAULT_COLLECTION_NAME])
     return chat_history_manager
 
