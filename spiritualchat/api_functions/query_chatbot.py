@@ -88,6 +88,7 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
             for source in sources:
                 split_id = source.metadata['id'].rsplit('_', 1)
                 url = split_id[0] if len(split_id) > 1 else source.metadata['id']
+                url = url.replace('experiences/', 'Experiences/')
                 split_content = source.page_content.split('\n', 1)
                 name = split_content[0] if len(split_content) > 0 else 'Unnamed document'
                 snippet = split_content[1] if len(split_content) > 1 else 'Document content missing'
