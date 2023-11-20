@@ -130,9 +130,16 @@ class HybridChatHistory(BaseChatMessageHistory):
         Only now will the chat history actually be saved to MongoDB.
         """
         # Push all buffered messages to MongoDB and update the title field
+        if not self.collection.find_one({"user_id": self.user_id, "_id": ObjectId(self.chat_id)}).get("title"):
+            self.collection.update_one(
+                {"user_id": self.user_id, "_id": ObjectId(self.chat_id)},
+                {"$set": {"title": title}},
+                upsert=True
+            )
+
         self.collection.update_one(
             {"user_id": self.user_id, "_id": ObjectId(self.chat_id)},
-            {"$push": {"history": {"$each": self.messages_buffer}}, "$set": {"title": title}},
+            {"$push": {"history": {"$each": self.messages_buffer}}},
             upsert=True
         )
         # Clear the buffer
@@ -141,6 +148,6 @@ class HybridChatHistory(BaseChatMessageHistory):
     def clear(self):
         self.chat_message_history.clear()
         try:
-            self.collection.delete_many({"user_id": self.user_id, "chat_id": ObjectId(chat_id)})
+            self.collection.delete_many({"user_id": self.user_id, "chat_id": ObjectId(self.chat_id)})
         except errors.WriteError as err:
             logger.error(err)
