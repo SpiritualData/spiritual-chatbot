@@ -9,8 +9,8 @@ from weaviate import Client, AuthApiKey
 # )
 
 # initialize weaviate
-auth_config = AuthApiKey(api_key="ukN2W33IqulkKeXrJYjqR7z9iB2FCFpMILrp")
-url = "https://spiritualdata-vectordb-kwkau1ts.weaviate.network"
+auth_config = AuthApiKey(api_key=os.environ.get('WEAVIATE_API_KEY'))
+url = os.environ.get('WEAVIATE_URL')
 
 client = Client(
   url=url,
