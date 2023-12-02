@@ -9,7 +9,7 @@ Implementation details:
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationBufferWindowMemory
-from spiritualchat.vectorstores import vector_index
+from spiritualchat.vectorstores import vector_client
 from spiritualchat.api_functions.pinecone_namespacesearch import PineconeNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
 from spiritualchat.api_functions.prompts import create_condense_prompt, create_qa_prompt
 from spiritualchat.api_functions.chat_history import chat_history_to_str

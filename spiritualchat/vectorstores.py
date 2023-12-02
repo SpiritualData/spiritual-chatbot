@@ -12,13 +12,13 @@ from weaviate import Client, AuthApiKey
 auth_config = AuthApiKey(api_key=os.environ.get('WEAVIATE_API_KEY'))
 url = os.environ.get('WEAVIATE_URL')
 
-client = Client(
+vector_client = Client(
   url=url,
   auth_client_secret=auth_config
 )
 
-
-# Defining vector database schema
+'''
+# DEFINING VECTOR DATABASE SCHEMA (FOR WEAVIATE)
 spiritualdata_schema = {
     "class": "SpiritualData",
     "description": "A collection of spiritual data",
@@ -50,7 +50,6 @@ spiritualdata_schema = {
     ],
 }
 
-'''
 # CREATING THE CLASS (NOT NEEDED ANYMORE, A ONE-TIME DEAL)
 client.schema.create_class(spiritualdata_schema)
 
