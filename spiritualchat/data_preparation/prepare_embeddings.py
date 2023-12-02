@@ -43,7 +43,7 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
         header_column = {header.replace('\ufeff', '').strip(): col_i for col_i, header in enumerate(headers)}
         for i, doc in enumerate(tqdm(reader)):
             try:
-                description = doc[header_column['Abstract']]
+                description = doc[header_column['Description']]
                 if not description or len(description) < min_length:
                     continue
                 mongo_data = document_to_metadata(doc, header_column, mongo_field_map)
