@@ -47,6 +47,7 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
                 if not description or len(description) < min_length:
                     continue
                 mongo_data = document_to_metadata(doc, header_column, mongo_field_map)
+                metadata = document_to_metadata(doc, header_column, metadata_map)
                 url = norm_id(mongo_data.get('url'))
                 if not url:
                     logger.warning('No URL found: '+str(mongo_data))
@@ -78,7 +79,9 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
                     mongo_doc['embedding'] = bson.binary.Binary(pickle.dumps(vectors[chunk_index], protocol=pickle.HIGHEST_PROTOCOL))
                     mongo_doc['chunk_index'] = chunk_index
                     mongo_docs.append(mongo_doc)
-                    vectordb_docs.append({'vectordb_id': vectordb_id, 'name': mongo_doc['name'], 'url': url, 'embedding': vectors[chunk_index]})
+                    metadata_doc = dict(metadata)
+                    metadata_doc['chunk_index'] = chunk_index
+                    vectordb_docs.append({'vectordb_id': vectordb_id, 'metadata': metadata_doc, 'embedding': vectors})
 
                 result = mongo_query_db(query_type='insert_many', mongo_object=mongo, collection=dataset, to_insert=mongo_docs)
             except Exception:
@@ -119,8 +122,7 @@ def upload_embeddings(class_name, client, vectordb_docs):
         for item in vectordb_docs:
             properties = {
                 "vectordb_id": item['vectordb_id'],
-                "name": item['name'],
-                "url": item['url'],
+                "metadata": item['metadata'],
             }
 
             vectors = item['embedding']
