@@ -15,8 +15,8 @@ import bson
 
 vector_texts = []
 
-def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=100, column_to_embed='Description', offset=None, min_length=20, metadata_map={'Experience Type': 'experience_type','Situation Tags': 'situation_tags','Content Tags': 'content_tags','After effects tags': 'after_effects_tags','Date of experience': 'data_experience','Age': 'age','Date reported': 'date_reported','Gender': 'gender','Date Published': 'date_published', 'Authors': 'authors', 'Year': 'date_published', 'Topic': 'topic_tags'},
-    mongo_field_map={'URL': 'url', 'Name': 'name', 'Language': 'language', 'Authors': 'authors', 'Summary': 'summary'}, delete_previous: bool=False):
+def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=100, column_to_embed='Description', offset=None, min_length=20, metadata_map={'Experience Type': 'experience_type','Situation Tags': 'situation_tags','Content Tags': 'content_tags','After effects tags': 'after_effects_tags','Date of experience': 'data_experience','Age': 'age','Date reported': 'date_reported','Gender': 'gender', 'Authors': 'authors', 'Year': 'year_published', 'Topic': 'topic_tags', 'Language': 'language','Summary': 'summary'},
+    mongo_field_map={'URL': 'url', 'Name': 'name'}, delete_previous: bool=False):
     """
     Args:
         - filepath (str): Filepath containing Notion export of documents with 'description' column.
@@ -35,7 +35,7 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
     embeddings = OpenAIEmbeddings(chunk_size=chunk_size*2) # chunking here shouldn't be necessary due to text splitting
     num_embeddings = 0
     mongo = mongo_connect_db(database_name='spiritualdata')
-    vectordb_docs = []
+    # vectordb_docs = []
 
     with open(filepath, 'r', encoding='utf8') as csv_file:
         reader = csv.reader(csv_file)
@@ -43,7 +43,7 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
         header_column = {header.replace('\ufeff', '').strip(): col_i for col_i, header in enumerate(headers)}
         for i, doc in enumerate(tqdm(reader)):
             try:
-                description = doc[header_column['Description']]
+                description = doc[header_column['Abstract']]
                 if not description or len(description) < min_length:
                     continue
                 mongo_data = document_to_metadata(doc, header_column, mongo_field_map)
@@ -72,22 +72,26 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
                 mongo_docs = []
                 for chunk_index, text in enumerate(texts):
                     # Prepare documents for Pinecone and Mongo databases
-                    vectordb_id = url+"_"+str(chunk_index)
                     mongo_doc = dict(mongo_data)
-                    mongo_doc['text'] = text
-                    mongo_doc['vectordb_id'] = vectordb_id
-                    mongo_doc['embedding'] = bson.binary.Binary(pickle.dumps(vectors[chunk_index], protocol=pickle.HIGHEST_PROTOCOL))
-                    mongo_doc['chunk_index'] = chunk_index
-                    mongo_docs.append(mongo_doc)
                     metadata_doc = dict(metadata)
+                    mongo_doc['text'] = text
+                    mongo_doc['embedding'] = vectors[chunk_index]
                     metadata_doc['chunk_index'] = chunk_index
+                    mongo_doc['metadata'] = metadata_doc
+                    mongo_docs.append(mongo_doc)
+                    '''
+                    WEAVIATE code
+                    vectordb_id = url+"_"+str(chunk_index)
+                    mongo_doc['vectordb_id'] = vectordb_id
+                    mongo_doc['chunk_index'] = chunk_index
                     vectordb_docs.append({'vectordb_id': vectordb_id, 'metadata': metadata_doc, 'embedding': vectors})
+                    '''
 
                 result = mongo_query_db(query_type='insert_many', mongo_object=mongo, collection=dataset, to_insert=mongo_docs)
             except Exception:
                 logger.exception(f"Reached num_embeddings {num_embeddings}, doc {i}, and URL {url}")
                 break
-    upload_embeddings("SpiritualData", vector_client, vectordb_docs)
+    # upload_embeddings(dataset, vector_client, vectordb_docs)
     return num_embeddings
 
 def document_to_metadata(doc, header_column, metadata_map):
