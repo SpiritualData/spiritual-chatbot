@@ -1,5 +1,5 @@
 """
-Uses LangChain, Pinecone, and GPT-4 for a chatbot that interacts with vectorstores for spiritual information.
+Uses LangChain, MongoDB (as vector store), and GPT-4 for a chatbot that interacts with vectorstores for spiritual information.
 
 Implementation details:
 - Provide the user input to the chat bot and use GPT-4 via langchain to extract text to embed for each vector store, where relevant.
@@ -9,8 +9,8 @@ Implementation details:
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationBufferWindowMemory
-from spiritualchat.vectorstores import vector_client
-from spiritualchat.api_functions.pinecone_namespacesearch import PineconeNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
+# from spiritualchat.vectorstores import vector_client, metadata_fields
+from spiritualchat.api_functions.vectorstore_namespacesearch import VectorStoreNamespaceSearchRetriever, NamespaceSearchConversationalRetrievalChain
 from spiritualchat.api_functions.prompts import create_condense_prompt, create_qa_prompt
 from spiritualchat.api_functions.chat_history import chat_history_to_str
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -63,7 +63,7 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
     if chain is None:
         chain = NamespaceSearchConversationalRetrievalChain.from_llm(
             llm=ChatOpenAI(temperature=0,model_name=parsing_model,request_timeout=timeout_seconds),
-            retriever=PineconeNamespaceSearchRetriever(embeddings=embeddings, index=vector_index),
+            retriever=VectorStoreNamespaceSearchRetriever(embeddings=embeddings, index="default"),
             condense_question_prompt=create_condense_prompt(generate_title=title is None, namespaces=namespaces, chat_history_str=chat_history_str),
             condense_question_llm=ChatOpenAI(temperature=0,model_name=answer_model,request_timeout=timeout_seconds),
             output_key=output_key,
@@ -86,8 +86,7 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
         for namespace, sources in result['source_documents'].items():
             formatted_sources = []
             for source in sources:
-                split_id = source.metadata['id'].rsplit('_', 1)
-                url = split_id[0] if len(split_id) > 1 else source.metadata['id']
+                url = source.url
                 url = url.replace('experiences/', 'Experiences/')
                 split_content = source.page_content.split('\n', 1)
                 name = split_content[0] if len(split_content) > 0 else 'Unnamed document'

@@ -1,4 +1,4 @@
-"""Search in Pinecone using namespaces and metadata filters, and support multiple queries by namespace as part of a single retrieval call."""
+"""Search in vector store using namespaces and metadata filters, and support multiple queries by namespace as part of a single retrieval call."""
 from __future__ import annotations
 import hashlib
 from typing import Any, Dict, List, Optional
@@ -42,9 +42,9 @@ import regex as re
 
 from spiritualchat.api_functions.combine_docs_chain import NamespaceStuffDocumentsChain
 from spiritualdata_utils import mongo_query_db, mongo_connect_db
+import os
 
-
-mongo = mongo_connect_db(database_name='spiritualdata')
+mongo = mongo_connect_db(uri=os.getenv("MONGO_VECTOR_URI", None), database_name='spiritualdata')
 
 # Depending on the memory type and configuration, the chat history format may differ.
 # This needs to be consolidated.
@@ -52,9 +52,15 @@ CHAT_TURN_TYPE = Union[Tuple[str, str], BaseMessage]
 
 class OptionalContentDocument(Document):
     page_content: Optional[str]
+    url: Optional[str]
 
-class PineconeNamespaceSearchRetriever(BaseRetriever, BaseModel):
+class VectorStoreNamespaceSearchRetriever(BaseRetriever, BaseModel):
     embeddings: Embeddings
+    '''
+    client: Any
+    className: str
+    metadata_fields: []
+    '''
     index: Any
     top_k: int = 4
     alpha: float = 0.5
@@ -73,7 +79,7 @@ class PineconeNamespaceSearchRetriever(BaseRetriever, BaseModel):
     ) -> Dict[str, List[Document]]:
         """
         Args:
-            namespace_queries (dict): Key is namespace in the Pinecone index. Value is a list of strings (queries to embed).
+            namespace_queries (dict): Key is namespace in the Mongo. Value is a list of strings (queries to embed).
             metadata_filter (dict): Key is the metadata field associated with each Pinecone vector, and value is the filter applied on that field (see https://docs.pinecone.io/docs/metadata-filtering).
             callbacks (CallbackManagerForRetrieverRun): A manager for callbacks to be used during execution.
 
@@ -85,41 +91,53 @@ class PineconeNamespaceSearchRetriever(BaseRetriever, BaseModel):
 
         for namespace, queries in namespace_queries.items():
             namespace = namespace.replace('_queries', '')
-            pinecone_ids = []
+            # vectordb_ids = []
             for query in queries:
                 dense_vec = self.embeddings.embed_query(query)
-                result = self.index.query(
-                    vector=dense_vec,
-                    top_k=self.top_k,
-                    include_metadata=True,
-                    namespace=namespace,
-                    filter=metadata_filter
-                )
-                for res in result["matches"]:
-                    pinecone_ids.append(res["id"])
-                    res["metadata"]["id"] = res["id"]
+                '''
+                WEAVIATE code
+                metadata_fields = ", ".join(self.metadata_fields)
+                query_metadata = "metadata {" + metadata_fields + "}"
+                result = self.client.query.get(self.className, ["vectordb_id", query_metadata]) \
+                    .with_near_vector({"vector": dense_vec}) \
+                    .with_additional(["distance"]) \
+                    .with_limit(self.top_k).do()
+                for res in result['data']['Get'][self.className]:
+                    vectordb_ids.append(res["vectordb_id"])
                     namespace_docs[namespace].append(
                         OptionalContentDocument(page_content=None, metadata=res["metadata"])
                     )
-
-            # Query MongoDB for the 'name' and 'text' fields of the collected Pinecone IDs
-            mongo_results = mongo_query_db(
-                query_type="find",
-                mongo_object=mongo,
-                query={"pinecone_id": {"$in": pinecone_ids}},
-                collection=namespace,
-                projection={"name": 1, "text": 1, "pinecone_id": 1},
-            )
-
-            # Create a dictionary to map Pinecone IDs to their corresponding MongoDB results
-            mongo_dict = {result["pinecone_id"]: result for result in mongo_results}
-
-            # Update the placeholder Documents with the 'name' and 'text' fields from the MongoDB results
-            for document in namespace_docs[namespace]:
-                pinecone_id = document.metadata["id"]
-                mongo_result = mongo_dict[pinecone_id]
-                document.page_content = f'{mongo_result["name"]}\n{mongo_result["text"]}'
-
+                '''
+                try:
+                    collection = mongo[namespace]
+                except Exception:
+                    logger.info(f"No collection found for this namespace: {namespace}")
+                    continue
+                else:
+                    try:
+                        results = collection.aggregate(
+                            [
+                                {
+                                    "$search": {
+                                        "index": self.index,
+                                        "knnBeta": {
+                                            "vector": dense_vec,
+                                            "path": "embedding",
+                                            "filter": metadata_filter,
+                                            "k": self.top_k,
+                                        }
+                                    }
+                                }
+                            ]
+                        )
+                    except Exception:
+                        logger.info(f"Failed to retrieve results for query: {query}")
+                        continue
+                    else:
+                        for res in results:
+                            namespace_docs[namespace].append(
+                                OptionalContentDocument(page_content=f'{res["name"]}\n{res["text"]}', metadata=res["metadata"], url=res["url"])
+                            )
         if callbacks:
             callbacks.on_result(namespace_docs)
 
@@ -176,6 +194,7 @@ class NamespaceSearchConversationalRetrievalChain(ConversationalRetrievalChain):
         """
         # Extract JSON part from AI response
         title = None
+        logger.info(ai_response)
         try:
             # First, try to parse the whole response as JSON
             namespace_queries = json.loads(ai_response)
@@ -184,11 +203,10 @@ class NamespaceSearchConversationalRetrievalChain(ConversationalRetrievalChain):
             # If that fails, try to extract JSON part using a non-greedy regex
             try:
                 json_part = re.search('{.*?}', ai_response).group(0)
-                namespace_queries = json.loads(json_part)
-                title = namespace_queries.pop('title')
             except (AttributeError, json.JSONDecodeError):
-                print(f"Error on AI response: {error}\nCouldn't extract JSON from: {ai_response}")
-                return {}
+                json_part = '{' + ai_response + '}'
+            namespace_queries = json.loads(json_part)
+            title = namespace_queries.pop('title')
         return title, namespace_queries
 
     def _call(

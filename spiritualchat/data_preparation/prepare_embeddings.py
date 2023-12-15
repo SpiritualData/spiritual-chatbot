@@ -1,6 +1,6 @@
 from spiritualdata_utils import mongo_query_db, mongo_connect_db
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from spiritualchat.vectorstores import vector_client
+# from spiritualchat.vectorstores import vector_client
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 import os

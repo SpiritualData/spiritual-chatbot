@@ -9,16 +9,16 @@ from weaviate import Client, AuthApiKey
 # )
 
 # initialize weaviate
-auth_config = AuthApiKey(api_key=os.environ.get('WEAVIATE_API_KEY'))
-url = os.environ.get('WEAVIATE_URL')
+# auth_config = AuthApiKey(api_key=os.environ.get('WEAVIATE_API_KEY'))
+# url = os.environ.get('WEAVIATE_URL')
 
-vector_client = Client(
-  url=url,
-  auth_client_secret=auth_config
-)
+# vector_client = Client(
+#   url=url,
+#   auth_client_secret=auth_config
+# )
 
-metadata_fields = ["experience_type", "situation_tags", "content_tags", "after_effects_tags", "data_experience", 
-                   "age", "date_reported", "gender", "date_published", "authors", "date_published", "topic_tags", "chunk_index"]
+# metadata_fields = ["experience_type", "situation_tags", "content_tags", "after_effects_tags", "data_experience", 
+#                    "age", "date_reported", "gender", "date_published", "authors", "date_published", "topic_tags", "chunk_index"]
 
 '''
 # DEFINING VECTOR DATABASE SCHEMA (FOR WEAVIATE)
