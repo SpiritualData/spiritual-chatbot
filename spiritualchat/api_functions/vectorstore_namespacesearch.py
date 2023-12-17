@@ -194,7 +194,6 @@ class NamespaceSearchConversationalRetrievalChain(ConversationalRetrievalChain):
         """
         # Extract JSON part from AI response
         title = None
-        logger.info(ai_response)
         try:
             # First, try to parse the whole response as JSON
             namespace_queries = json.loads(ai_response)
