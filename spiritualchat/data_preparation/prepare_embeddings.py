@@ -1,6 +1,6 @@
 from spiritualdata_utils import mongo_query_db, mongo_connect_db
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from spiritualchat.vectorstores import vector_index
+# from spiritualchat.vectorstores import vector_client
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.docstore.document import Document
 import os
@@ -15,8 +15,8 @@ import bson
 
 vector_texts = []
 
-def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=100, column_to_embed='Description', offset=None, min_length=20, metadata_map={'Experience Type': 'experience_type','Situation Tags': 'situation_tags','Content Tags': 'content_tags','After effects tags': 'after_effects_tags','Date of experience': 'data_experience','Age': 'age','Date reported': 'date_reported','Gender': 'gender','Date Published': 'date_published', 'Authors': 'authors', 'Year': 'date_published', 'Topic': 'topic_tags', 'Topic Tags': 'topic_tags'},
-    mongo_field_map={'URL': 'url', 'Name': 'name', 'Language': 'language', 'Authors': 'authors', 'Summary': 'summary'}, delete_previous: bool=False):
+def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=100, column_to_embed='Description', offset=None, min_length=20, metadata_map={'Experience Type': 'experience_type','Situation Tags': 'situation_tags','Content Tags': 'content_tags','After effects tags': 'after_effects_tags','Date of experience': 'data_experience','Age': 'age','Date reported': 'date_reported','Gender': 'gender', 'Authors': 'authors', 'Year': 'year_published', 'Topic': 'topic_tags', 'Language': 'language','Summary': 'summary'},
+    mongo_field_map={'URL': 'url', 'Name': 'name'}, delete_previous: bool=False):
     """
     Args:
         - filepath (str): Filepath containing Notion export of documents with 'description' column.
@@ -35,17 +35,15 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
     embeddings = OpenAIEmbeddings(chunk_size=chunk_size*2) # chunking here shouldn't be necessary due to text splitting
     num_embeddings = 0
     mongo = mongo_connect_db(database_name='spiritualdata')
+    # vectordb_docs = []
 
-    # if delete_previous:
-    #     vector_index.delete(deleteAll='true', namespace=dataset)
-    #     mongo[dataset].delete_many({})
-    with open(filepath, 'r') as csv_file:
+    with open(filepath, 'r', encoding='utf8') as csv_file:
         reader = csv.reader(csv_file)
         headers = next(reader)
         header_column = {header.replace('\ufeff', '').strip(): col_i for col_i, header in enumerate(headers)}
         for i, doc in enumerate(tqdm(reader)):
             try:
-                description = doc[header_column['Description']]
+                description = doc[header_column['Abstract']]
                 if not description or len(description) < min_length:
                     continue
                 mongo_data = document_to_metadata(doc, header_column, mongo_field_map)
@@ -57,8 +55,7 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
                 if not mongo_data.get('name'):
                     logger.warning('No Name found: '+str(doc[header_column['Name']]))
                     continue
-                split_metadata = {"source": filepath, "row": i}
-                split_docs = text_splitter.split_documents([Document(page_content=description, metadata=split_metadata)])
+                split_docs = text_splitter.split_documents([Document(page_content=description)])
                 if offset and num_embeddings < offset:
                     num_embeddings += len(split_docs)
                     continue
@@ -72,28 +69,29 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
                     logger.warning(f'Splits texts is of length {len(texts)} but there are {len(vectors)}')
                     continue
                 num_embeddings += len(vectors)
-
-                pinecone_docs = []
                 mongo_docs = []
                 for chunk_index, text in enumerate(texts):
                     # Prepare documents for Pinecone and Mongo databases
-                    pinecone_id = url+"_"+str(chunk_index)
-                    metadata['chunk_index'] = chunk_index
-                    pinecone_docs.append((pinecone_id, vectors[chunk_index], metadata))
                     mongo_doc = dict(mongo_data)
+                    metadata_doc = dict(metadata)
                     mongo_doc['text'] = text
-                    mongo_doc['pinecone_id'] = pinecone_id
-                    mongo_doc['embedding'] = bson.binary.Binary(pickle.dumps(vectors[chunk_index], protocol=pickle.HIGHEST_PROTOCOL))
+                    mongo_doc['embedding'] = vectors[chunk_index]
+                    metadata_doc['chunk_index'] = chunk_index
+                    mongo_doc['metadata'] = metadata_doc
                     mongo_docs.append(mongo_doc)
-                # Add embeddings to Pinecone with metadata and namespace
-                vector_index.upsert(
-                    pinecone_docs,
-                    namespace=dataset
-                )
+                    '''
+                    WEAVIATE code
+                    vectordb_id = url+"_"+str(chunk_index)
+                    mongo_doc['vectordb_id'] = vectordb_id
+                    mongo_doc['chunk_index'] = chunk_index
+                    vectordb_docs.append({'vectordb_id': vectordb_id, 'metadata': metadata_doc, 'embedding': vectors})
+                    '''
+
                 result = mongo_query_db(query_type='insert_many', mongo_object=mongo, collection=dataset, to_insert=mongo_docs)
             except Exception:
                 logger.exception(f"Reached num_embeddings {num_embeddings}, doc {i}, and URL {url}")
                 break
+    # upload_embeddings(dataset, vector_client, vectordb_docs)
     return num_embeddings
 
 def document_to_metadata(doc, header_column, metadata_map):
@@ -114,6 +112,29 @@ def norm_id(id_text):
     if not id_text:
         return None
     return id_text.strip().strip('/').lower()
+
+def upload_embeddings(class_name, client, vectordb_docs):
+    # Batch Configuration
+    client.batch.configure(
+        batch_size=100,
+        dynamic=True,
+        timeout_retries=3,
+    )
+
+    counter = 0
+    with client.batch as batch:
+        for item in vectordb_docs:
+            properties = {
+                "vectordb_id": item['vectordb_id'],
+                "metadata": item['metadata'],
+            }
+
+            vectors = item['embedding']
+
+            batch.add_data_object(properties, class_name, None, vectors)
+            counter += 1
+        print(f"Imported {counter} / {len(vectordb_docs)}")
+    print("Imported complete")
 
 def embed_csv(df):
     """
