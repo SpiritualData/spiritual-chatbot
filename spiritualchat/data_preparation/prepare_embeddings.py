@@ -14,14 +14,17 @@ import pickle
 import bson
 
 vector_texts = []
+name_col = 'Name'
+desc_col = 'Description'
+url_col = 'URL'
 
 def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=100, column_to_embed='Description', offset=None, min_length=20, metadata_map={'Experience Type': 'experience_type','Situation Tags': 'situation_tags','Content Tags': 'content_tags','After effects tags': 'after_effects_tags','Date of experience': 'data_experience','Age': 'age','Date reported': 'date_reported','Gender': 'gender','Date Published': 'date_published', 'Authors': 'authors', 'Year': 'date_published', 'Topic': 'topic_tags', 'Topic Tags': 'topic_tags'},
     mongo_field_map={'URL': 'url', 'Name': 'name', 'Language': 'language', 'Authors': 'authors', 'Summary': 'summary'}, delete_previous: bool=False):
     """
     Args:
-        - filepath (str): Filepath containing Notion export of documents with 'description' column.
+        - filepath (str): Filepath containing Notion export of documents with 'Name', 'Description', and 'URL' columns.
         - dataset (str): Data to be embedded. This is used for namespace. One of 'experiences', 'research', 'hypotheses'
-        - chunk_size (int): Size of each chunk (default: 1000).
+        - chunk_size (int): Max characters for each chunk (default: 1000).
         - chunk_overlap (int): Overlap between consecutive chunks (default: 20).
 
     Returns:
@@ -45,13 +48,13 @@ def prepare_embeddings(filepath, dataset: str, chunk_size=1000, chunk_overlap=10
         header_column = {header.replace('\ufeff', '').strip(): col_i for col_i, header in enumerate(headers)}
         for i, doc in enumerate(tqdm(reader)):
             try:
-                description = doc[header_column['Description']]
+                description = doc[header_column[column_to_embed]]
                 if not description or len(description) < min_length:
                     continue
                 mongo_data = document_to_metadata(doc, header_column, mongo_field_map)
                 metadata = document_to_metadata(doc, header_column, metadata_map)
                 url = norm_id(mongo_data.get('url'))
-                if not url:
+                if not normed_url:
                     logger.warning('No URL found: '+str(mongo_data))
                     continue
                 if not mongo_data.get('name'):
@@ -113,7 +116,7 @@ def document_to_metadata(doc, header_column, metadata_map):
 def norm_id(id_text):
     if not id_text:
         return None
-    return id_text.strip().strip('/').lower()
+    return id_text.strip().strip('/')
 
 def embed_csv(df):
     """
@@ -122,7 +125,7 @@ def embed_csv(df):
     all_embeddings = []
     for index, row in tqdm(df.iterrows(), total=df.shape[0]):
         # Create the prompt
-        prompt = row["Name"] + "\n" + row["Description"] + "\n" + row["URL"] + "\n"
+        prompt = row[name_col] + "\n" + row[desc_col] + "\n" + row[url_col] + "\n"
         # Create the embeddings
         response = openai.Embedding.create(
             model="text-embedding-ada-002",
