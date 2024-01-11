@@ -178,27 +178,31 @@ class HybridChatHistory(BaseChatMessageHistory):
         Only now will the chat history actually be saved to MongoDB.
         """
         # Push all buffered messages to MongoDB and update the title field
-        prev_title = self.collection.find_one(
-            {"user_id": self.user_id, "_id": ObjectId(self.chat_id)}
-        ).get("title")
+        try:
+            chat_record = self.collection.find_one({"user_id": self.user_id, "_id": ObjectId(self.chat_id)})
 
-        if not prev_title:
+            update_fields = {
+                "$push": {"history": {"$each": self.messages_buffer}},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+
+            # Update the title only if it's provided and different from the existing one
+            if title and (not chat_record or chat_record.get("title") != title):
+                update_fields["$set"]["title"] = title
+
+            # Update the record in MongoDB
             self.collection.update_one(
                 {"user_id": self.user_id, "_id": ObjectId(self.chat_id)},
-                {"$set": {"title": title}},
-                upsert=True,
+                update_fields,
+                upsert=True
             )
 
-        self.collection.update_one(
-            {"user_id": self.user_id, "_id": ObjectId(self.chat_id)},
-            {
-                "$push": {"history": {"$each": self.messages_buffer}},
-                "$set": {"updated_at": datetime.utcnow()},
-            },
-            upsert=True,
-        )
-        # Clear the buffer
-        self.messages_buffer.clear()
+            # Clear the buffer
+            self.messages_buffer.clear()
+
+        except PyMongoError as e:
+            # Log the error (adjust logging to your setup)
+            print(f"Error saving chat: {e}")
 
     def clear(self):
         self.chat_message_history.clear()
