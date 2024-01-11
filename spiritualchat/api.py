@@ -177,9 +177,10 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat/response", response_model=ChatResponse)
 async def respond(
-    request: ChatRequest, credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: ChatRequest
 ):
-    user_id = await decode_jwt(credentials)
+    # user_id = await decode_jwt(credentials)
+    user_id = 1
     chat_id = request.chat_id
     logger.info("chat_id:", chat_id)
     chat_history, chat_id = get_chat_history_manager().get_chat_history(

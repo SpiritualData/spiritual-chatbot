@@ -56,9 +56,9 @@ def query_chatbot(user_input: str, chat_history, namespaces=['experiences', 'res
     """
     global chain
     global embeddings
-    logger.info('kwargs:', kwargs)
+    logger.info(f'kwargs: {kwargs}')
     chat_history_str = chat_history_to_str(chat_history, max_messages=memory_k)
-    kwargs['prompt'] = create_qa_prompt(chat_history_str)
+    kwargs = {'prompt': create_qa_prompt(chat_history_str)}
     output_key = "answer"
     if chain is None:
         chain = NamespaceSearchConversationalRetrievalChain.from_llm(
