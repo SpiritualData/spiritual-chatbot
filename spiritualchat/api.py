@@ -46,8 +46,8 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from spiritualchat.api_functions.query_chatbot import query_chatbot
-from spiritualchat.api_functions.chat_history import get_chat_history_manager
+from spiritualchat import query_chatbot
+from spiritualchat import get_chat_history_manager
 from jose import jwt, JWTError
 import json
 import httpx
