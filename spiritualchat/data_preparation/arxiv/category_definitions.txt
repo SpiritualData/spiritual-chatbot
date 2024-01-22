@@ -1,0 +1,229 @@
+Physics:
+hep-ph: High Energy Physics - Phenomenology
+hep-th: High Energy Physics - Theory
+quant-ph: Quantum Physics
+astro-ph: Astrophysics
+gr-qc: General Relativity and Quantum Cosmology
+cond-mat.mtrl-sci: Condensed Matter - Materials Science
+cond-mat.mes-hall: Condensed Matter - Mesoscale and Nanoscale Physics
+cond-mat.stat-mech: Condensed Matter - Statistical Mechanics
+cond-mat.str-el: Condensed Matter - Strongly Correlated Electrons
+astro-ph.CO: Astrophysics - Cosmology and Nongalactic Astrophysics
+astro-ph.GA: Astrophysics - Astrophysics of Galaxies
+astro-ph.SR: Astrophysics - Solar and Stellar Astrophysics
+astro-ph.HE: Astrophysics - High Energy Astrophysical Phenomena
+astro-ph.EP: Astrophysics - Earth and Planetary Astrophysics
+astro-ph.IM: Astrophysics - Instrumentation and Methods for Astrophysics
+nucl-th: Nuclear Theory
+hep-ex: High Energy Physics - Experiment
+hep-lat: High Energy Physics - Lattice
+nucl-ex: Nuclear Experiment
+physics.optics: Physics - Optics
+cond-mat.supr-con: Condensed Matter - Superconductivity
+cond-mat.soft: Condensed Matter - Soft Condensed Matter
+cond-mat.dis-nn: Condensed Matter - Disordered Systems and Neural Networks
+cond-mat.quant-gas: Condensed Matter - Quantum Gases
+cond-mat.other: Condensed Matter - Other
+physics.flu-dyn: Physics - Fluid Dynamics
+physics.comp-ph: Physics - Computational Physics
+physics.soc-ph: Physics - Physics and Society
+physics.chem-ph: Physics - Chemical Physics
+physics.atom-ph: Physics - Atomic Physics
+physics.ins-det: Physics - Instrumentation and Detectors
+physics.app-ph: Physics - Applied Physics
+physics.plasm-ph: Physics - Plasma Physics
+physics.geo-ph: Physics - Geophysics
+physics.med-ph: Physics - Medical Physics
+physics.space-ph: Physics - Space Physics
+physics.ao-ph: Physics - Atmospheric and Oceanic Physics
+physics.atm-clus: Physics - Atomic and Molecular Clusters
+physics.class-ph: Physics - Classical Physics
+physics.acc-ph: Physics - Accelerator Physics
+physics.data-an: Physics - Data Analysis, Statistics and Probability
+physics.ed-ph: Physics - Physics Education
+physics.gen-ph: Physics - General Physics
+physics.hist-ph: Physics - History and Philosophy of Physics
+physics.pop-ph: Physics - Popular Physics
+Computer Science:
+cs.LG: Machine Learning
+cs.CV: Computer Vision
+cs.AI: Artificial Intelligence
+cs.CL: Computational Linguistics
+cs.IT: Information Theory
+cs.CR: Cryptography and Security
+cs.SY: Systems and Control
+cs.RO: Robotics
+cs.DS: Data Structures and Algorithms
+cs.NA: Numerical Analysis
+cs.NI: Networking and Internet Architecture
+cs.DC: Distributed, Parallel, and Cluster Computing
+cs.SI: Social Informatics
+cs.CY: Computers and Society
+cs.LO: Logic in Computer Science
+cs.IR: Information Retrieval
+cs.HC: Human-Computer Interaction
+cs.SE: Software Engineering
+cs.NE: Neural and Evolutionary Computing
+cs.DM: Discrete Mathematics
+cs.SD: Sound
+cs.MA: Multiagent Systems
+cs.CG: Computational Geometry
+cs.CE: Computational Engineering, Finance, and Science
+cs.PL: Programming Languages
+cs.MM: Multimedia
+cs.GR: Graphics
+cs.FL: Formal Languages and Automata Theory
+cs.DL: Digital Libraries
+cs.AR: Hardware Architecture
+cs.DB: Databases
+cs.OS: Operating Systems
+cs.SC: Symbolic Computation
+cs.GT: Computer Science and Game Theory
+cs.CC: Computational Complexity
+cs.PF: Performance
+cs.MS: Mathematical Software
+cs.ET: Emerging Technologies
+cs.OH: Other Computer Science
+Mathematics:
+math-ph: Mathematical Physics
+math.MP: Mathematical Physics
+math.CO: Combinatorics
+math.AP: Analysis of PDEs
+math.PR: Probability
+math.AG: Algebraic Geometry
+math.OC: Optimization and Control
+math.DG: Differential Geometry
+math.NT: Number Theory
+math.NA: Numerical Analysis
+math.DS: Dynamical Systems
+math.FA: Functional Analysis
+math.RT: Representation Theory
+math.GT: Geometric Topology
+math.ST: Statistics Theory
+stat.TH: Statistics Theory
+math.CA: Classical Analysis and ODEs
+math.GR: Group Theory
+math.RA: Rings and Algebras
+math.CV: Complex Variables
+math.AT: Algebraic Topology
+math.AC: Commutative Algebra
+math.OA: Operator Algebras
+math.SP: Spectral Theory
+math.SG: Symplectic Geometry
+math.QA: Quantum Algebra
+math.LO: Logic
+math.KT: K-Theory and Homology
+math.CT: Category Theory
+math.GM: General Mathematics
+math.GN: General Topology
+math.HO: History and Overview
+math.MG: Metric Geometry
+Statistics:
+stat.ML: Machine Learning
+stat.ME: Methodology
+stat.AP: Applications
+stat.CO: Computation
+stat.OT: Other Statistics
+
+Computer Science:
+
+cs.GL: Computer Graphics and Visualization
+Quantitative Finance:
+
+q-fin.RM: Risk Management
+q-fin.MF: Mathematical Finance
+q-fin.TR: Trading and Market Microstructure
+q-fin.PR: Pricing of Securities
+q-fin.ST: Statistical Finance
+q-fin.PM: Portfolio Management
+q-fin.EC: Economics
+q-fin.CP: Computational Finance
+q-fin.GN: General Finance
+Chaos Dynamics:
+
+chao-dyn: Chaos Theory and Nonlinear Dynamics
+Material Theory:
+
+mtrl-th: Material Science Theory
+Atmospheric Science:
+
+ao-sci: Atmospheric and Oceanic Science
+Computational Linguistics:
+
+cmp-lg: Computational Linguistics
+Economics:
+
+econ.EM: Econometrics
+econ.TH: Economic Theory
+econ.GN: General Economics
+Quantum Biology:
+
+q-bio.OT: Other
+q-bio.CB: Cell Behavior
+q-bio.GN: Genomics
+q-bio.SC: Subcellular Processes
+q-bio.BM: Biomolecules
+q-bio.PE: Populations and Evolution
+q-bio.NC: Neurons and Cognition
+q-bio.QM: Quantitative Methods
+q-bio.MN: Molecular Networks
+q-bio.TO: Tissues and Organs
+q-bio: General Biology
+Quantum Algebra:
+
+q-alg: Quantum Algebra
+Nonlinear Sciences:
+
+nlin.CG: Cellular Automata and Lattice Gases
+nlin.SI: Exactly Solvable and Integrable Systems
+nlin.PS: Pattern Formation and Solitons
+nlin.AO: Adaptation and Self-Organizing Systems
+nlin.CD: Chaotic Dynamics
+Differential Geometry:
+
+dg-ga: Differential Geometry and Geometric Analysis
+Electrical Engineering:
+
+eess.AS: Audio and Speech Processing
+eess.IV: Image and Video Processing
+eess.SY: Systems and Control
+eess.SP: Signal Processing
+Solv-Integrable Systems:
+
+solv-int: Solvable and Integrable Systems
+Pattern Solutions:
+
+patt-sol: Pattern Solutions and Solitons
+Plasma Physics:
+
+plasm-ph: Plasma Physics
+Chemical Physics:
+
+chem-ph: Chemical Physics
+Supr-Con:
+
+supr-con: Superconductivity
+Condensed Matter Physics:
+
+cond-mat: Condensed Matter
+Algebraic Geometry:
+
+alg-geom: Algebraic Geometry
+Atom Physics:
+
+atom-ph: Atomic Physics
+Bayesian Analysis:
+
+bayes-an: Bayesian Analysis
+Computational Gas Dynamics:
+
+comp-gas: Computational and Applied Gas Dynamics
+Information Theory:
+
+math.IT: Information Theory
+Mathematics:
+
+funct-an: Functional Analysis
+acc-phys: Accelerator Physics
+adap-org: Adaptive Systems
+nlin.CD: Chaotic Dynamics

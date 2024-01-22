@@ -1,0 +1,81 @@
+hep-ph: High Energy Physics - Phenomenology
+hep-th: High Energy Physics - Theory
+quant-ph: Quantum Physics
+astro-ph: Astrophysics
+gr-qc: General Relativity and Quantum Cosmology
+cond-mat.mtrl-sci: Condensed Matter - Materials Science
+cond-mat.mes-hall: Condensed Matter - Mesoscale and Nanoscale Physics
+cond-mat.stat-mech: Condensed Matter - Statistical Mechanics
+cond-mat.str-el: Condensed Matter - Strongly Correlated Electrons
+astro-ph.CO: Astrophysics - Cosmolfogy and Nongalactic Astrophysics
+astro-ph.GA: Astrophysics - Astrophysics of Galaxies
+astro-ph.SR: Astrophysics - Solar and Stellar Astrophysics
+astro-ph.HE: Astrophysics - High Energy Astrophysical Phenomena
+astro-ph.EP: Astrophysics - Earth and Planetary Astrophysics
+astro-ph.IM: Astrophysics - Instrumentation and Methods for Astrophysics
+nucl-th: Nuclear Theory
+hep-ex: High Energy Physics - Experiment
+hep-lat: High Energy Physics - Lattice
+nucl-ex: Nuclear Experiment
+physics.optics: Physics - Optics
+cond-mat.supr-con: Condensed Matter - Superconductivity
+cond-mat.soft: Condensed Matter - Soft Condensed Matter
+cond-mat.dis-nn: Condensed Matter - Disordered Systems and Neural Networks
+cond-mat.quant-gas: Condensed Matter - Quantum Gases
+cond-mat.other: Condensed Matter - Other
+physics.flu-dyn: Physics - Fluid Dynamics
+physics.comp-ph: Physics - Computational Physics
+physics.soc-ph: Physics - Physics and Society
+physics.chem-ph: Physics - Chemical Physics
+physics.atom-ph: Physics - Atomic Physics
+physics.ins-det: Physics - Instrumentation and Detectors
+physics.app-ph: Physics - Applied Physics
+physics.plasm-ph: Physics - Plasma Physics
+physics.geo-ph: Physics - Geophysics
+physics.med-ph: Physics - Medical Physics
+physics.space-ph: Physics - Space Physics
+physics.ao-ph: Physics - Atmospheric and Oceanic Physics
+physics.atm-clus: Physics - Atomic and Molecular Clusters
+physics.class-ph: Physics - Classical Physics
+physics.acc-ph: Physics - Accelerator Physics
+physics.data-an: Physics - Data Analysis, Statistics and Probability
+physics.ed-ph: Physics - Physics Education
+physics.gen-ph: Physics - General Physics
+physics.hist-ph: Physics - History and Philosophy of Physics
+physics.pop-ph: Physics - Popular Physics
+cs.NE: Neural and Evolutionary Computing
+cs.SD: Sound
+math-ph: Mathematical Physics
+math.MP: Mathematical Physics
+stat.ME: Methodology
+chao-dyn: Chaos Theory and Nonlinear Dynamics
+mtrl-th: Material Science Theory
+ao-sci: Atmospheric and Oceanic Science
+q-bio.OT: Other
+q-bio.CB: Cell Behavior
+q-bio.GN: Genomics
+q-bio.SC: Subcellular Processes
+q-bio.BM: Biomolecules
+q-bio.PE: Populations and Evolution
+q-bio.NC: Neurons and Cognition
+q-bio.QM: Quantitative Methods
+q-bio.MN: Molecular Networks
+q-bio.TO: Tissues and Organs
+q-bio: General Biology
+q-alg: Quantum Algebra
+nlin.CG: Cellular Automata and Lattice Gases
+nlin.CD: Chaotic Dynamics
+nlin.PS: Pattern Formation and Solitons
+nlin.AO: Adaptation and Self-Organizing Systems
+plasm-ph: Plasma Physics
+chem-ph: Chemical Physics
+supr-con: Superconductivity
+cond-mat: Condensed Matter
+alg-geom: Algebraic Geometry
+atom-ph: Atomic Physics
+acc-phys: Accelerator Physics
+bayes-an: Bayesian Analysis
+comp-gas: Computational and Applied Gas Dynamics
+acc-phys: Accelerator Physics
+math.IT: Information Theory
+adap-org: Adaptive Systems
