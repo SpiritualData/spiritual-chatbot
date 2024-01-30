@@ -273,7 +273,7 @@ async def delete_chat(
 Custom GPT / Data API
 """
 from fastapi import FastAPI, HTTPException
-from fastapi.security.api_key import APIKeyHeader
+from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 from spiritualdata_utils import mongo_query_db, mongo_connect_db
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -287,20 +287,29 @@ embeddings = OpenAIEmbeddings(chunk_size=1000)
 max_top_k = 50
 supported_data_sources = ['experiences', 'research', 'hypotheses']
 
-@app.post("/get_data")
-async def get_data(source_queries: Dict[str, List[str]], api_key: str, top_k: int = 4):
+# Define Pydantic models
+class InputModel(BaseModel):
+    api_key: str
+    top_k: int
+    source_queries: Dict[str, List[str]]
+
+class OutputModel(BaseModel):
+    response_data: Dict[str, Dict[str, List[Dict[str, str]]]]
+
+@app.post("/get_data", response_model=OutputModel)
+async def get_data(data: InputModel):
     expected_api_key = os.environ.get('CUSTOM_GPT_API_KEY')
 
-    if expected_api_key != api_key:
+    if expected_api_key != data.api_key:
         raise HTTPException(status_code=401, detail="Invalid API Key")
 
     # Setting a limit for the top_k value:
-    top_k = min(top_k, max_top_k)
+    top_k = min(data.top_k, max_top_k)
 
     # Initializing the response structure:
-    response_data = {data_source: {} for data_source in supported_data_sources if data_source in source_queries}
+    response_data = {data_source: {} for data_source in supported_data_sources if data_source in data.source_queries}
 
-    for data_source, queries in source_queries.items():
+    for data_source, queries in data.source_queries.items():
         if data_source not in supported_data_sources:
             logger.info(f"{data_source} collection not found")
             continue
@@ -347,5 +356,5 @@ async def get_data(source_queries: Dict[str, List[str]], api_key: str, top_k: in
     if not any(response_data.values()):  # Checking if the response_data is empty
         raise HTTPException(status_code=404, detail="No results found")
 
-    return JSONResponse(content=response_data)
+    return OutputModel(response_data=response_data)
 
