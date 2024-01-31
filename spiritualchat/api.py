@@ -274,11 +274,10 @@ Custom GPT / Data API
 """
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse
 from spiritualdata_utils import mongo_query_db, mongo_connect_db
 from langchain.embeddings.openai import OpenAIEmbeddings
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 from loguru import logger
 
 mongo = mongo_connect_db(uri=os.getenv("MONGO_VECTOR_URI", None), database_name='spiritualdata')
@@ -290,7 +289,7 @@ supported_data_sources = ['experiences', 'research', 'hypotheses']
 # Define Pydantic models
 class InputModel(BaseModel):
     api_key: str
-    top_k: int
+    top_k: Optional[int] = 4
     source_queries: Dict[str, List[str]]
 
 class OutputModel(BaseModel):
