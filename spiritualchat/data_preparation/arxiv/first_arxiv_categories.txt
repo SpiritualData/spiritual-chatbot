@@ -1,0 +1,14 @@
+hep-ph: High Energy Physics - Phenomenology
+hep-th: High Energy Physics - Theory
+quant-ph: Quantum Physics
+astro-ph: Astrophysics
+gr-qc: General Relativity and Quantum Cosmology
+cond-mat.mtrl-sci: Condensed Matter - Materials Science
+cond-mat.mes-hall: Condensed Matter - Mesoscale and Nanoscale Physics
+cond-mat.stat-mech: Condensed Matter - Statistical Mechanics
+cond-mat.str-el: Condensed Matter - Strongly Correlated Electrons
+astro-ph.HE: Astrophysics - High Energy Astrophysical Phenomena
+cond-mat.quant-gas: Condensed Matter - Quantum Gases
+cs.NE: Neural and Evolutionary Computing
+q-alg: Quantum Algebra
+atom-ph: Atomic Physics
