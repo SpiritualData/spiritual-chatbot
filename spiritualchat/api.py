@@ -290,7 +290,7 @@ supported_data_sources = ['experiences', 'research', 'hypotheses']
 class InputModel(BaseModel):
     api_key: str
     top_k: Optional[int] = 4
-    source_queries: Dict[str, List[str]]
+    source_queries: List[List[str]]
 
 class OutputModel(BaseModel):
     response_data: Dict[str, Dict[str, List[Dict[str, str]]]]
@@ -304,11 +304,19 @@ async def get_data(data: InputModel):
 
     # Setting a limit for the top_k value:
     top_k = min(data.top_k, max_top_k)
+    
+    # Initializing the source_queries structure
+    source_queries = {}
+    for source_query in data.source_queries:
+        if source_query[0] in source_queries:
+            source_queries[source_query[0]].append(source_query[1])
+        else:
+            source_queries[source_query[0]] = [source_query[1]]
 
     # Initializing the response structure:
-    response_data = {data_source: {} for data_source in supported_data_sources if data_source in data.source_queries}
+    response_data = {data_source: {} for data_source in supported_data_sources if data_source in source_queries}
 
-    for data_source, queries in data.source_queries.items():
+    for data_source, queries in source_queries.items():
         if data_source not in supported_data_sources:
             logger.info(f"{data_source} collection not found")
             continue
