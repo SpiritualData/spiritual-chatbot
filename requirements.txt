@@ -11,3 +11,4 @@ tqdm
 python-jose[cryptography]
 cachetools
 httpx
+weaviate-client
